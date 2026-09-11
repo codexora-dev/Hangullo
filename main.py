@@ -61,14 +61,14 @@ def compile_file(path: str) -> str:
 
 def main() -> None:
     if len(sys.argv) not in {2, 3}:
-        print("사용법: python main.py <파일.han> [--실행]")
+        print("사용법: python main.py <파일.hg> [--실행]")
         return
 
     source_path = sys.argv[1]
     should_run = len(sys.argv) == 3 and sys.argv[2] == "--실행"
 
-    if not source_path.endswith(".han"):
-        print("오류: Hangullo 소스 파일은 .han 확장자를 사용해야 합니다.")
+    if not source_path.endswith(".hg"):
+        print("오류: Hangullo 소스 파일은 .hg 확장자를 사용해야 합니다.")
         return
 
     if len(sys.argv) == 3 and not should_run:

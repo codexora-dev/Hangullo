@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class CliExecutionTests(unittest.TestCase):
     def test_cli_exits_gracefully_without_stdin(self):
-        source = ROOT / "examples" / "hello.han"
+        source = ROOT / "examples" / "hello.hg"
 
         proc = subprocess.run(
             [sys.executable, str(ROOT / "main.py"), str(source), "--실행"],

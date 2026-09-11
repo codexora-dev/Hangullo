@@ -249,7 +249,7 @@ class EditorTab(ttk.Frame):
 
     @property
     def title(self) -> str:
-        name = self.path.name if self.path else "새 파일.han"
+        name = self.path.name if self.path else "새 파일.hg"
         return f"* {name}" if self.dirty else name
 
     def content(self) -> str:
@@ -1222,7 +1222,7 @@ class HangulloIDE:
         path = filedialog.askopenfilename(
             title="파일 열기",
             initialdir=self.workspace,
-            filetypes=[("Hangullo 파일", "*.han"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
+            filetypes=[("Hangullo 파일", "*.hg"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
         )
         if path:
             self.open_file(Path(path))
@@ -1273,8 +1273,8 @@ class HangulloIDE:
         path = filedialog.asksaveasfilename(
             title="다른 이름으로 저장",
             initialdir=self.workspace,
-            defaultextension=".han",
-            filetypes=[("Hangullo 파일", "*.han"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
+            defaultextension=".hg",
+            filetypes=[("Hangullo 파일", "*.hg"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
         )
         if not path:
             return False
@@ -1643,9 +1643,9 @@ class HangulloIDE:
                     path = filedialog.asksaveasfilename(
                         title="파일 저장",
                         initialdir=self.workspace,
-                        defaultextension=".han",
+                        defaultextension=".hg",
                         filetypes=[
-                            ("Hangullo 파일", "*.han"),
+                            ("Hangullo 파일", "*.hg"),
                             ("모든 파일", "*.*"),
                         ],
                         parent=self.root,

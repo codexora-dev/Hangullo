@@ -52,12 +52,12 @@ Hangullo은 다음 방향성을 기반으로 개발됩니다.
 
 ## 3.1 파일 확장자
 
-Hangullo 소스 파일은 '.han' 확장자를 사용합니다.
+Hangullo 소스 파일은 '.hg' 확장자를 사용합니다.
 
 예:
-- main.han
-- hello.han
-- program.han
+- main.hg
+- hello.hg
+- program.hg
 
 ---
 
@@ -247,7 +247,7 @@ Hangullo은 개발자가 오류를 쉽게 이해하고 해결할 수 있도록 �
 
 예:
 오류: 정의되지 않은 변수를 사용했습니다.
-위치: main.han 10번째 줄
+위치: main.hg 10번째 줄
 해결: 변수가 선언되었는지 확인하세요.
 
 ---
