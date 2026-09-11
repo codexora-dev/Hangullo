@@ -998,7 +998,7 @@ class HangulloIDE:
         self.root.geometry("1220x780")
         self.root.minsize(900, 580)
 
-        icon_path = Path(__file__).parent.parent /"assets"/"icon"/"Hangullo_Logo.ico"
+        icon_path = Path(__file__).parent.parent / "assets" / "icon" / "Hangullo_Logo2.ico"
 
         print("아이콘 경로:", icon_path)
         print("아이콘 존재:", icon_path.exists())

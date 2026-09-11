@@ -4,4 +4,4 @@ Remove-Item -Force .\HangulloIDE.spec -ErrorAction SilentlyContinue
 
 install
 
-pyinstaller --noconfirm --clean --onefile --windowed --name "HangulloIDE" --icon ".\assets\icon\Hangullo_Logo.ico" --paths "." --collect-submodules compiler --collect-submodules lexer --collect-submodules parser .\IDE\app.py
+pyinstaller --noconfirm --clean --onefile --windowed --name "HangulloIDE" --icon ".\assets\icon\Hangullo_Logo1.ico" --paths "." --collect-submodules compiler --collect-submodules lexer --collect-submodules parser .\IDE\app.py
