@@ -1,4 +1,4 @@
-class HanError(Exception):
+class HangulloError(Exception):
     def __init__(
         self,
         message,
@@ -19,7 +19,7 @@ class HanError(Exception):
     def format(self):
         lines = [
             "┌────────────────────────────────────────",
-            "│ Han 오류",
+            "│ Hangullo 오류",
             "├────────────────────────────────────────",
             f"│ 오류 코드: {self.error_code}",
             f"│ 오류 종류: {self.error_type}",
@@ -43,7 +43,7 @@ class HanError(Exception):
             "│",
             f"│ {self.message}",
             "│",
-            "│ 이 오류 메시지를 복사하여 Han 커뮤니티에",
+            "│ 이 오류 메시지를 복사하여 Hangullo 커뮤니티에",
             "│ 질문하면 문제 해결에 도움을 받을 수 있습니다.",
             "└────────────────────────────────────────",
         ])
@@ -51,7 +51,7 @@ class HanError(Exception):
         return "\n".join(lines)
 
 
-class HanLexerError(HanError):
+class HangulloLexerError(HangulloError):
     def __init__(
         self,
         message,
@@ -69,7 +69,7 @@ class HanLexerError(HanError):
         )
 
 
-class HanParserError(HanError):
+class HangulloParserError(HangulloError):
     def __init__(
         self,
         message,
@@ -87,7 +87,7 @@ class HanParserError(HanError):
         )
 
 
-class HanCompilerError(HanError):
+class HangulloCompilerError(HangulloError):
     def __init__(
         self,
         message,

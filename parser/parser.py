@@ -1,5 +1,5 @@
 from lexer.lexer import Token
-from errors import HanParserError
+from errors import HangulloParserError
 from parser.nodes import (
     BinaryOpNode,  ## 이항 연산
     FunctionCallNode, ## 함수 호출
@@ -58,7 +58,7 @@ class Parser:
             return self.parse_function_call()
 
         def error(self, token, message):
-            raise HanParserError(
+            raise HangulloParserError(
                 message,
                 line=token.line,
                 column=token.column,

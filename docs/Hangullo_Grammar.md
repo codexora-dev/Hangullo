@@ -1,6 +1,6 @@
-# Han Language Grammar
+# Hangullo Language Grammar
 
-## Han 문법 명세서
+## Hangullo 문법 명세서
 
 ---
 
@@ -8,19 +8,19 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서명 | Han Language Grammar |
-| 프로젝트 | Han Programming Language |
+| 문서명 | Hangullo Language Grammar |
+| 프로젝트 | Hangullo Programming Language |
 | 버전 | 0.1 Draft |
 | 상태 | 초기 설계 문서 |
-| 목적 | Han 언어의 문법 및 코드 작성 규칙 정의 |
+| 목적 | Hangullo 언어의 문법 및 코드 작성 규칙 정의 |
 
 ---
 
 # 1. 개요
 
-Han Language Grammar는 Han 프로그래밍 언어 문법(Syntax)을 정의하는 공식 문서입니다.
+Hangullo Language Grammar는 Hangullo 프로그래밍 언어 문법(Syntax)을 정의하는 공식 문서입니다.
 
-본 문서는 Han 소스 코드가 어떤 형식으로 작성되어야 하는지 정의하며, 컴파일러와 개발 도구는 본 문서를 기준으로 구현됩니다.
+본 문서는 Hangullo 소스 코드가 어떤 형식으로 작성되어야 하는지 정의하며, 컴파일러와 개발 도구는 본 문서를 기준으로 구현됩니다.
 
 문법은 언어의 발전에 따라 변경될 수 있으며, 모든 변경 사항은 관련 설계 문서를 통해 관리됩니다.
 
@@ -28,7 +28,7 @@ Han Language Grammar는 Han 프로그래밍 언어 문법(Syntax)을 정의하�
 
 # 2. 문법 설계 원칙
 
-Han의 문법은 다음 원칙을 기반으로 설계됩니다.
+Hangullo의 문법은 다음 원칙을 기반으로 설계됩니다.
 
 - 한국어 사용자에게 자연스러운 표현을 사용한다.
 - 사람이 읽기 쉬운 코드를 우선한다.
@@ -40,7 +40,7 @@ Han의 문법은 다음 원칙을 기반으로 설계됩니다.
 
 # 3. 문자 집합
 
-Han은 UTF-8 문자 인코딩을 기본으로 합니다.
+Hangullo은 UTF-8 문자 인코딩을 기본으로 합니다.
 
 소스 코드에는 다음 문자를 사용할 수 있습니다.
 
@@ -76,17 +76,17 @@ userName
 
 # 5. 예약어(Keyword)
 
-Han에서 사용하는 예약어는 별도 문서에서 관리합니다.
+Hangullo에서 사용하는 예약어는 별도 문서에서 관리합니다.
 
 참고:
 
-- Han_keyword.md
+- Hangullo_keyword.md
 
 ---
 
 # 6. 리터럴(Literal)
 
-Han은 다음과 같은 리터럴을 지원합니다.
+Hangullo은 다음과 같은 리터럴을 지원합니다.
 
 | 종류 | 상태 |
 |---|---|
@@ -96,13 +96,13 @@ Han은 다음과 같은 리터럴을 지원합니다.
 | 논리값 | 설계 중 |
 | 리스트 | 설계 중 |
 
-세부 문법은 Han_Type_System.md에서 정의합니다.
+세부 문법은 Hangullo_Type_System.md에서 정의합니다.
 
 ---
 
 # 7. 주석(Comment)
 
-Han은 프로그램 설명을 위한 주석을 지원합니다.
+Hangullo은 프로그램 설명을 위한 주석을 지원합니다.
 
 주석의 정확한 문법은 추후 정의합니다.
 
@@ -116,7 +116,7 @@ Han은 프로그램 설명을 위한 주석을 지원합니다.
 
 # 8. 명령문(Statement)
 
-Han 프로그램은 하나 이상의 명령문으로 구성됩니다.
+Hangullo 프로그램은 하나 이상의 명령문으로 구성됩니다.
 
 명령문의 종류는 다음과 같습니다.
 
@@ -149,7 +149,7 @@ Han 프로그램은 하나 이상의 명령문으로 구성됩니다.
 
 # 10. 변수
 
-Han은 변수를 이용하여 데이터를 저장합니다.
+Hangullo은 변수를 이용하여 데이터를 저장합니다.
 
 다음 항목을 추후 정의합니다.
 
@@ -205,17 +205,17 @@ Han은 변수를 이용하여 데이터를 저장합니다.
 
 # 14. 자료형
 
-Han에서 지원하는 자료형은 별도 문서에서 정의합니다.
+Hangullo에서 지원하는 자료형은 별도 문서에서 정의합니다.
 
 참고
 
-- Han_Type_System.md
+- Hangullo_Type_System.md
 
 ---
 
 # 15. 공백 및 줄바꿈
 
-Han은 가독성을 위해 적절한 공백과 줄바꿈을 권장합니다.
+Hangullo은 가독성을 위해 적절한 공백과 줄바꿈을 권장합니다.
 
 공백과 들여쓰기 규칙은 향후 스타일 가이드에서 정의합니다.
 
@@ -223,7 +223,7 @@ Han은 가독성을 위해 적절한 공백과 줄바꿈을 권장합니다.
 
 # 16. 파일 구성
 
-Han 소스 파일은 하나 이상의 선언과 명령문으로 구성됩니다.
+Hangullo 소스 파일은 하나 이상의 선언과 명령문으로 구성됩니다.
 
 기본 파일 확장자는 다음을 사용합니다.
 
@@ -235,7 +235,7 @@ Han 소스 파일은 하나 이상의 선언과 명령문으로 구성됩니다.
 
 # 17. 스타일 가이드
 
-Han은 코드의 일관성을 유지하기 위해 공식 스타일 가이드를 제공합니다.
+Hangullo은 코드의 일관성을 유지하기 위해 공식 스타일 가이드를 제공합니다.
 
 향후 작성 예정
 
@@ -248,7 +248,7 @@ Han은 코드의 일관성을 유지하기 위해 공식 스타일 가이드를 
 
 # 18. 문법 변경 정책
 
-Han 문법은 다음 기준에 따라 변경됩니다.
+Hangullo 문법은 다음 기준에 따라 변경됩니다.
 
 - 언어 철학과의 일치 여부
 - 기존 코드와의 호환성
@@ -261,21 +261,21 @@ Han 문법은 다음 기준에 따라 변경됩니다.
 
 # 19. 참고 문서
 
-- Han_Philosophy.md
-- Han_Specification.md
-- Han_Keywords.md *(예정)*
-- Han_Type_System.md *(예정)*
+- Hangullo_Philosophy.md
+- Hangullo_Specification.md
+- Hangullo_Keywords.md *(예정)*
+- Hangullo_Type_System.md *(예정)*
 
 ---
 
 # 20. 결론
 
-Han Language Grammar는 Han 프로그래밍 언어의 공식 문법 기준을 정의하는 문서입니다.
+Hangullo Language Grammar는 Hangullo 프로그래밍 언어의 공식 문법 기준을 정의하는 문서입니다.
 
 현재 문서는 초기 설계 단계이며, 향후 언어의 발전에 따라 지속적으로 보완되고 확장됩니다.
 
-문법의 모든 변경 사항은 Han의 설계 철학과 기술 명세를 기반으로 이루어집니다.
+문법의 모든 변경 사항은 Hangullo의 설계 철학과 기술 명세를 기반으로 이루어집니다.
 
 ---
 
-Copyright © 2026 Han Project
+Copyright © 2026 Hangullo Project

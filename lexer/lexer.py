@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from errors import HanLexerError
+from errors import HangulloLexerError
 
 @dataclass
 class Token:
@@ -10,7 +10,7 @@ class Token:
 
 
 class Lexer:
-    """Han 소스 코드를 토큰으로 분해한다."""
+    """Hangullo 소스 코드를 토큰으로 분해한다."""
 
     KEYWORDS = {
         "출력": "PRINT",
@@ -102,7 +102,7 @@ class Lexer:
                 self._advance()
                 continue
 
-            raise HanLexerError(
+            raise HangulloLexerError(
                 f"알 수 없는 문자입니다: {char}",
                 line=self.line,
                 column=self.column,
@@ -124,7 +124,7 @@ class Lexer:
             char = self._advance()
             if char == "\\":
                 if self._is_at_end():
-                    raise HanLexerError(
+                    raise HangulloLexerError(
                         "문자열이 끝나지 않았습니다.",
                         line=start_line,
                         column=start_column,
@@ -135,7 +135,7 @@ class Lexer:
                 escaped = self._advance()
                 value.append({"n": "\n", "t": "\t", '"': '"', "\\": "\\"}.get(escaped, escaped))
             elif char == "\n":
-                raise HanLexerError(
+                raise HangulloLexerError(
                     "문자열은 한 줄 안에서 닫아야 합니다.",
                     line=start_line,
                     column=start_column,
@@ -147,7 +147,7 @@ class Lexer:
                 value.append(char)
 
         if self._is_at_end():
-            raise HanLexerError(
+            raise HangulloLexerError(
                 "문자열이 끝나지 않았습니다.",
                 line=start_line,
                 column=start_column,

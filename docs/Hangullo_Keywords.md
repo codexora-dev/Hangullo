@@ -1,6 +1,6 @@
-# Han Language Keyword
+# Hangullo Language Keyword
 
-## Han 예약어 명세서
+## Hangullo 예약어 명세서
 
 ---
 
@@ -8,27 +8,27 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서명 | Han Language Keywords |
-| 프로젝트 | Han Programming Language |
+| 문서명 | Hangullo Language Keywords |
+| 프로젝트 | Hangullo Programming Language |
 | 버전 | 0.1 Draft |
 | 상태 | 초기 설계 문서 |
-| 목적 | Han 언어에서 사용하는 예약어(Keyword)를 정의 |
+| 목적 | Hangullo 언어에서 사용하는 예약어(Keyword)를 정의 |
 
 ---
 
 # 1. 개요
 
-Han Language Keyword는 Han 프로그래밍 언어에서 사용하는 예약어(Keyword)를 정의하는 공식 문서입니다.
+Hangullo Language Keyword는 Hangullo 프로그래밍 언어에서 사용하는 예약어(Keyword)를 정의하는 공식 문서입니다.
 
 예약어는 언어에서 특별한 의미를 가지는 단어이며, 변수면, 함수명, 클래스명 등 일반 식별자로 사용할 수 없습니다.
 
-본 문서는 예약어의 목적과 의미를 정의하며, 세부 문법은 Han Language Grammar 문서를 따릅니다.
+본 문서는 예약어의 목적과 의미를 정의하며, 세부 문법은 Hangullo Language Grammar 문서를 따릅니다.
 
 ---
 
 # 2. 예약어 설계 원칙
 
-Han의 예약어는 다음 원칙을 기반으로 설계됩니다.
+Hangullo의 예약어는 다음 원칙을 기반으로 설계됩니다.
 
 - 한국어 사용자에게 자연스럽게 읽혀야 합니다.
 - 의미가 명확해야 합니다.
@@ -40,7 +40,7 @@ Han의 예약어는 다음 원칙을 기반으로 설계됩니다.
 
 # 3. 예약어 분류
 
-Han의 예약어는 다음과 같이 분류됩니다.
+Hangullo의 예약어는 다음과 같이 분류됩니다.
 
 - 입출력
 - 변수 및 상수
@@ -86,7 +86,7 @@ Han의 예약어는 다음과 같이 분류됩니다.
 | 거짓 | Boolean False | 예정 |
 | 목록 | 리스트 자료형 | 예정 |
 
-※ 자료형에 대한 자세한 내용은 Han_Type_System.md에서 정의합니다.
+※ 자료형에 대한 자세한 내용은 Hangullo_Type_System.md에서 정의합니다.
 
 ---
 
@@ -178,19 +178,19 @@ Han의 예약어는 다음과 같이 분류됩니다.
 
 # 8. 참고 문서
 
-- Han_Philosophy.md
-- Han_Specification.md
-- Han_Grammar.md
-- Han_Type_System.md *(예정)*
+- Hangullo_Philosophy.md
+- Hangullo_Specification.md
+- Hangullo_Grammar.md
+- Hangullo_Type_System.md *(예정)*
 
 ---
 
 # 9. 결론
 
-Han Language Keywords는 Han 프로그래밍 언어에서 사용하는 예약어를 정의하는 공식 문서입니다.
+Hangullo Language Keywords는 Hangullo 프로그래밍 언어에서 사용하는 예약어를 정의하는 공식 문서입니다.
 
 예약어는 언어의 핵심 요소이며, 문법과 표준 라이브러리의 발전에 따라 지속적으로 검토 확장됩니다.
 
 ---
 
-Copyright © 2026 Han Project
+Copyright © 2026 Hangullo Project

@@ -12,11 +12,11 @@ from parser.nodes import (
     UnaryOpNode,
     VarAssignNode,
 )
-from errors import HanCompilerError
+from errors import HangulloCompilerError
 
 
 class PythonCodeGenerator:
-    """Han AST를 실행 가능한 Python 코드로 변환한다."""
+    """Hangullo AST를 실행 가능한 Python 코드로 변환한다."""
 
     BINARY_OPERATORS = {
         "+": "+",
@@ -93,7 +93,7 @@ class PythonCodeGenerator:
 
             return lines
 
-        raise HanCompilerError(
+        raise HangulloCompilerError(
             f"지원하지 않는 AST 노드입니다: {type(node).__name__}"
         )
 
@@ -131,6 +131,6 @@ class PythonCodeGenerator:
             right = self.generate_expression(node.right)
             return f"({left} {operator} {right})"
 
-        raise HanCompilerError(
+        raise HangulloCompilerError(
             f"지원하지 않는 표현식 노드입니다: {type(node).__name__}"
         )

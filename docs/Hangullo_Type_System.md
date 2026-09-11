@@ -1,6 +1,6 @@
-# Han Type System
+# Hangullo Type System
 
-## Han 자료형 시스템 명세서
+## Hangullo 자료형 시스템 명세서
 
 ---
 
@@ -8,27 +8,27 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서명 | Han Type System |
-| 프로젝트 | Han Programming Language |
+| 문서명 | Hangullo Type System |
+| 프로젝트 | Hangullo Programming Language |
 | 버전 | 0.1 Draft |
 | 상태 | 초기 설계 문서 |
-| 목적 | Han 언어의 자료형(Type System) 정의 |
+| 목적 | Hangullo 언어의 자료형(Type System) 정의 |
 
 ---
 
 # 1. 개요
 
-Han Type System은 Han 프로그래밍 언어에서 사용하는 자료형(Type)의 구조와 동작 원칙을 정의하는 공식 문서입니다.
+Hangullo Type System은 Hangullo 프로그래밍 언어에서 사용하는 자료형(Type)의 구조와 동작 원칙을 정의하는 공식 문서입니다.
 
 자료형은 프로그램에서 데이터를 저장, 처리 및 전달하는 기본 단위이며, 언어의 안정성과 표현력을 결정하는 핵심 요소입니다.
 
-본 문서는 Han이 제공하는 자료형의 종류와 설계 방향을 정의하며, 세부 구현은 언어의 발전 과정에 따라 확장됩니다.
+본 문서는 Hangullo이 제공하는 자료형의 종류와 설계 방향을 정의하며, 세부 구현은 언어의 발전 과정에 따라 확장됩니다.
 
 ---
 
 # 2. 설계 목표
 
-Han의 자료형 시스템은 다음 목표를 기반으로 설계됩니다.
+Hangullo의 자료형 시스템은 다음 목표를 기반으로 설계됩니다.
 
 - 직관적인 자료형 이름 제공
 - 명확한 데이터 표현
@@ -40,7 +40,7 @@ Han의 자료형 시스템은 다음 목표를 기반으로 설계됩니다.
 
 # 3. 자료형 분류
 
-Han의 다음과 같은 자료형을 제공합니다.
+Hangullo의 다음과 같은 자료형을 제공합니다.
 
 | 분류 | 설명 | 상태 |
 |---|---|---|
@@ -100,7 +100,7 @@ Han의 다음과 같은 자료형을 제공합니다.
 
 ```
 "안녕하세요"
-"Han Language"
+"Hangullo Language"
 ```
 
 주요 특징
@@ -188,7 +188,7 @@ Han의 다음과 같은 자료형을 제공합니다.
 
 # 6. 사용자 정의 자료형
 
-Han은 사용자가 새로운 자료형을 정의할 수 있도록 설계합니다.
+Hangullo은 사용자가 새로운 자료형을 정의할 수 있도록 설계합니다.
 
 예상 대상
 
@@ -202,7 +202,7 @@ Han은 사용자가 새로운 자료형을 정의할 수 있도록 설계합니�
 
 # 7. 자료형 변환
 
-Han은 자료형 간 변환(Type Conversion)을 지원합니다.
+Hangullo은 자료형 간 변환(Type Conversion)을 지원합니다.
 
 변환 방식
 
@@ -223,7 +223,7 @@ Han은 자료형 간 변환(Type Conversion)을 지원합니다.
 
 # 10. Null 값
 
-Han은 값이 존재하지 않음을 표현하기 위한 Null 값을 지원할 수 있습니다.
+Hangullo은 값이 존재하지 않음을 표현하기 위한 Null 값을 지원할 수 있습니다.
 
 Null 지원 여부 및 표현 방식은 추후 확정합니다.
 
@@ -246,11 +246,11 @@ Null 지원 여부 및 표현 방식은 추후 확정합니다.
 
 # 12. 메모리 모델
 
-자료형의 저장 방식과 메모리 관리 방식은 Han Memory Model 문서에서 정의합니다.
+자료형의 저장 방식과 메모리 관리 방식은 Hangullo Memory Model 문서에서 정의합니다.
 
 참고 문서
 
-- Han_Memory_Model.md *(예정)*
+- Hangullo_Memory_Model.md *(예정)*
 
 ---
 
@@ -270,18 +270,18 @@ Null 지원 여부 및 표현 방식은 추후 확정합니다.
 
 # 14. 참고 문서
 
-- Han_philosophy.md
-- Han_specification.md
-- Han_grammar.md
-- Han_keywords.md
-- Han_memory_model.md *(예정)*
+- Hangullo_philosophy.md
+- Hangullo_specification.md
+- Hangullo_grammar.md
+- Hangullo_keywords.md
+- Hangullo_memory_model.md *(예정)*
 
 ---
 
 # 15. 결론
 
-Han Type System은 Han 프로그래밍 언어의 자료형 체계를 정의하는 공식 문서입니다.
+Hangullo Type System은 Hangullo 프로그래밍 언어의 자료형 체계를 정의하는 공식 문서입니다.
 
-자료형 시스템은 언어의 안정성과 표현력을 결정하는 핵심 요소이며, Han의 발전 과정에 따라 지속적으로 확장 및 개선됩니다.
+자료형 시스템은 언어의 안정성과 표현력을 결정하는 핵심 요소이며, Hangullo의 발전 과정에 따라 지속적으로 확장 및 개선됩니다.
 
-본 문서는 Han 컴파일러, 표준 라이브러리 및 개발 도구 구현의 기준으로 사용됩니다.
+본 문서는 Hangullo 컴파일러, 표준 라이브러리 및 개발 도구 구현의 기준으로 사용됩니다.

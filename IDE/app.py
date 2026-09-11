@@ -44,16 +44,16 @@ from tkinter import (
 from compiler.codegen.python import PythonCodeGenerator
 from lexer.lexer import Lexer
 from parser.parser import Parser
-from errors import HanError
+from errors import HangulloError
 from learn.learning_app import open_learning_window
 
 
 APP_DIR = Path(__file__).resolve().parent
-DEFAULT_HAN_ROOT = APP_DIR.parent
+DEFAULT_HANGULLO_ROOT = APP_DIR.parent
 SETTINGS_FILE = APP_DIR / "settings.json"
  
 THEMES = {
-    "Han Dark": {
+    "Hangullo Dark": {
         "window": "#181a1f",
         "editor": "#20232a",
         "panel": "#242730",
@@ -72,7 +72,7 @@ THEMES = {
         "error": "#ff6b7a",
         "console": "#15171c",
     },
-    "Han Light": {
+    "Hangullo Light": {
         "window": "#f4f6fb",
         "editor": "#ffffff",
         "panel": "#eef1f7",
@@ -147,12 +147,12 @@ def choose_font(preferred: list[str]) -> str:
 
 @dataclass
 class Settings:
-    theme: str = "Han Dark"
+    theme: str = "Hangullo Dark"
     font_family: str = "맑은 고딕"
     font_size: int = 13
     show_line_numbers: bool = True
     word_wrap: bool = False
-    han_root: str = str(DEFAULT_HAN_ROOT)
+    han_root: str = str(DEFAULT_HANGULLO_ROOT)
     first_run: bool = True
     show_python_code: bool = False
 
@@ -198,7 +198,7 @@ class LineNumbers(tk.Canvas):
 
 
 class EditorTab(ttk.Frame):
-    def __init__(self, master, app: "HanIDE", path: Path | None = None, content: str = ""):
+    def __init__(self, master, app: "HangulloIDE", path: Path | None = None, content: str = ""):
         super().__init__(master)
         self.app = app
         self.path = path
@@ -345,7 +345,7 @@ class EditorTab(ttk.Frame):
 
 
 class SettingsDialog(tk.Toplevel):
-    def __init__(self, app: "HanIDE"):
+    def __init__(self, app: "HangulloIDE"):
         super().__init__(app.root)
         self.app = app
         self.title("설정")
@@ -379,7 +379,7 @@ class SettingsDialog(tk.Toplevel):
 
         ttk.Checkbutton(body, text="생성된 Python 코드 표시", variable=self.python_var).grid(row=5,column=1,sticky="w",pady=6)
 
-        self._label(body, "Han 폴더", 6)
+        self._label(body, "Hangullo 폴더", 6)
         root_row = ttk.Frame(body)
         root_row.grid(row=6, column=1, sticky="ew", pady=6)
         ttk.Entry(root_row, textvariable=self.root_var, width=38).pack(side=LEFT, fill=X, expand=True)
@@ -397,13 +397,13 @@ class SettingsDialog(tk.Toplevel):
         ttk.Label(parent, text=text).grid(row=row, column=0, sticky="w", padx=(0, 16), pady=6)
 
     def choose_root(self) -> None:
-        path = filedialog.askdirectory(title="Han 프로젝트 폴더 선택", initialdir=self.root_var.get())
+        path = filedialog.askdirectory(title="Hangullo 프로젝트 폴더 선택", initialdir=self.root_var.get())
         if path:
             self.root_var.set(path)
 
     def auto_find_han_root(self) -> None:
         progress = tk.Toplevel(self)
-        progress.title("Han 프로젝트 찾기")
+        progress.title("Hangullo 프로젝트 찾기")
         progress.geometry("560x300")
         progress.resizable(False, False)
         progress.transient(self)
@@ -414,7 +414,7 @@ class SettingsDialog(tk.Toplevel):
 
         ttk.Label(
             frame,
-            text="Han 프로젝트를 찾고 있습니다.",
+            text="Hangullo 프로젝트를 찾고 있습니다.",
             font=(self.app.settings.font_family, 11, "bold")
         ).pack(anchor="w", pady=(0, 12))
 
@@ -446,7 +446,7 @@ class SettingsDialog(tk.Toplevel):
 
         found_label = ttk.Label(
             frame,
-            text="발견한 Han 프로젝트: 0개"
+            text="발견한 Hangullo 프로젝트: 0개"
         )
         found_label.pack(anchor="w", pady=3)
 
@@ -516,7 +516,7 @@ class SettingsDialog(tk.Toplevel):
 
         def search_fast_paths():
             """
-            일반적으로 Han 프로젝트가 있을 가능성이 높은 곳을
+            일반적으로 Hangullo 프로젝트가 있을 가능성이 높은 곳을
             먼저 검색한다.
             """
 
@@ -819,11 +819,11 @@ class SettingsDialog(tk.Toplevel):
                         _, path, scanned = event
 
                         found_label.configure(
-                            text="발견한 Han 프로젝트: 1개"
+                            text="발견한 Hangullo 프로젝트: 1개"
                         )
 
                         current_label.configure(
-                            text=f"Han 프로젝트 발견: {path}"
+                            text=f"Hangullo 프로젝트 발견: {path}"
                         )
 
                         count_label.configure(
@@ -841,7 +841,7 @@ class SettingsDialog(tk.Toplevel):
                             self.select_han_project(projects)
                         else:
                             messagebox.showinfo(
-                                "Han 프로젝트 찾기",
+                                "Hangullo 프로젝트 찾기",
                                 "검색을 취소했습니다.",
                                 parent=self
                             )
@@ -869,8 +869,8 @@ class SettingsDialog(tk.Toplevel):
                         if not projects:
 
                             messagebox.showwarning(
-                                "Han 프로젝트 찾기",
-                                "Han 프로젝트를 찾지 못했습니다.",
+                                "Hangullo 프로젝트 찾기",
+                                "Hangullo 프로젝트를 찾지 못했습니다.",
                                 parent=self
                             )
 
@@ -883,8 +883,8 @@ class SettingsDialog(tk.Toplevel):
                             )
 
                             messagebox.showinfo(
-                                "Han 프로젝트 찾기",
-                                "Han 프로젝트를 찾았습니다.\n\n"
+                                "Hangullo 프로젝트 찾기",
+                                "Hangullo 프로젝트를 찾았습니다.\n\n"
                                 f"{projects[0]}",
                                 parent=self
                             )
@@ -923,7 +923,7 @@ class SettingsDialog(tk.Toplevel):
         )
     def select_han_project(self, projects: list[Path]) -> None:
         window = tk.Toplevel(self)
-        window.title("Han 프로젝트 선택")
+        window.title("Hangullo 프로젝트 선택")
         window.geometry("650x400")
         window.transient(self)
         window.grab_set()
@@ -933,7 +933,7 @@ class SettingsDialog(tk.Toplevel):
 
         ttk.Label(
             frame,
-            text="여러 개의 Han 프로젝트를 찾았습니다.\n사용할 프로젝트를 선택하세요."
+            text="여러 개의 Hangullo 프로젝트를 찾았습니다.\n사용할 프로젝트를 선택하세요."
         ).pack(anchor="w", pady=(0, 10))
 
         listbox = tk.Listbox(frame)
@@ -954,7 +954,7 @@ class SettingsDialog(tk.Toplevel):
             if not selection:
                 messagebox.showwarning(
                     "프로젝트 선택",
-                    "Han 프로젝트를 선택하세요.",
+                    "Hangullo 프로젝트를 선택하세요.",
                     parent=window
                 )
                 return
@@ -991,14 +991,14 @@ class SettingsDialog(tk.Toplevel):
         self.destroy()
 
 
-class HanIDE:
+class HangulloIDE:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Han IDE")
+        self.root.title("Hangullo IDE")
         self.root.geometry("1220x780")
         self.root.minsize(900, 580)
 
-        icon_path = Path(__file__).parent.parent /"assets"/"icon"/"Han_Logo.ico"
+        icon_path = Path(__file__).parent.parent /"assets"/"icon"/"Hangullo_Logo.ico"
 
         print("아이콘 경로:", icon_path)
         print("아이콘 존재:", icon_path.exists())
@@ -1008,7 +1008,7 @@ class HanIDE:
 
         self.settings = Settings.load()
         self.settings.font_family = choose_font([self.settings.font_family, "맑은 고딕", "Malgun Gothic", "D2Coding", "Cascadia Mono", "Arial"])
-        self.palette = THEMES[self.settings.theme if self.settings.theme in THEMES else "Han Dark"]
+        self.palette = THEMES[self.settings.theme if self.settings.theme in THEMES else "Hangullo Dark"]
         self.workspace = Path(self.settings.han_root)
 
         self.in_process_run = False
@@ -1085,10 +1085,10 @@ class HanIDE:
         menubar.add_cascade(label="보기", menu=view_menu)
 
         help_menu = tk.Menu(menubar, tearoff=False)
-        help_menu.add_command(label="Han 배우기", command=self.open_learning)
+        help_menu.add_command(label="Hangullo 배우기", command=self.open_learning)
         help_menu.add_separator()
         help_menu.add_command(label="보고", command=self.open_report)
-        help_menu.add_command(label="Han IDE 정보", command = self.show_about)
+        help_menu.add_command(label="Hangullo IDE 정보", command = self.show_about)
         menubar.add_cascade(label="도움말", menu=help_menu)
 
     def _build_layout(self) -> None:
@@ -1102,7 +1102,7 @@ class HanIDE:
             ("컴파일", self.compile_current),
             ("실행(F5)", self.run_current),
             ("Python 코드", self.show_python_code),
-            ("Han 배우기", self.open_learning),
+            ("Hangullo 배우기", self.open_learning),
             ("설정", self.open_settings),
             ("보고", self.open_report),
             ("실행 중지", self.stop_process)
@@ -1162,7 +1162,7 @@ class HanIDE:
         self.root.bind("<F6>", lambda _event: self.compile_current())
 
     def apply_settings(self) -> None:
-        self.palette = THEMES[self.settings.theme if self.settings.theme in THEMES else "Han Dark"]
+        self.palette = THEMES[self.settings.theme if self.settings.theme in THEMES else "Hangullo Dark"]
         p = self.palette
 
         self.root.configure(bg=p["window"])
@@ -1222,7 +1222,7 @@ class HanIDE:
         path = filedialog.askopenfilename(
             title="파일 열기",
             initialdir=self.workspace,
-            filetypes=[("Han 파일", "*.han"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
+            filetypes=[("Hangullo 파일", "*.han"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
         )
         if path:
             self.open_file(Path(path))
@@ -1274,7 +1274,7 @@ class HanIDE:
             title="다른 이름으로 저장",
             initialdir=self.workspace,
             defaultextension=".han",
-            filetypes=[("Han 파일", "*.han"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
+            filetypes=[("Hangullo 파일", "*.han"), ("Python 파일", "*.py"), ("모든 파일", "*.*")],
         )
         if not path:
             return False
@@ -1298,9 +1298,9 @@ class HanIDE:
 
         try:
             python_code = self.compile_source_to_python(source)
-        except HanError as error:
+        except HangulloError as error:
             self.write_console(
-                f"Han 내부 오류: {error}\n",
+                f"Hangullo 내부 오류: {error}\n",
                 "error"
             )
             return
@@ -1332,11 +1332,11 @@ class HanIDE:
 
         try:
             python_code = self.compile_source_to_python(source)
-        except HanError as error:
+        except HangulloError as error:
             self.write_console(error.format() + "\n", "error")
             return
         except Exception as error:
-            self.write_console(f"Han 내부 오류: {error}\n", "error")
+            self.write_console(f"Hangullo 내부 오류: {error}\n", "error")
             return
 
         self.last_python_code = python_code
@@ -1477,7 +1477,7 @@ class HanIDE:
 
         if tab is None:
             self.status.configure(
-                text=f"Han 폴더: {self.workspace}"
+                text=f"Hangullo 폴더: {self.workspace}"
             )
             return
 
@@ -1489,7 +1489,7 @@ class HanIDE:
             text=(
                 f"{name}    {state}    "
                 f"{line}행 {int(column) + 1}열    "
-                f"UTF-8    Han: {self.workspace}"
+                f"UTF-8    Hangullo: {self.workspace}"
             )
         )
 
@@ -1645,7 +1645,7 @@ class HanIDE:
                         initialdir=self.workspace,
                         defaultextension=".han",
                         filetypes=[
-                            ("Han 파일", "*.han"),
+                            ("Hangullo 파일", "*.han"),
                             ("모든 파일", "*.*"),
                         ],
                         parent=self.root,
@@ -1690,16 +1690,16 @@ class HanIDE:
 
     def show_welcome_message(self) -> None:
         messagebox.showinfo(
-            "Han IDE 0.1 Beta",
+            "Hangullo IDE 0.1 Beta",
             (
-                "Han IDE에 오신 것을 환영합니다!\n\n"
-                "현재 Han IDE는 0.1 Beta 버전입니다.\n"
+                "Hangullo IDE에 오신 것을 환영합니다!\n\n"
+                "현재 Hangullo IDE는 0.1 Beta 버전입니다.\n"
                 "아직 개발 중인 버전이므로 오류가 발생하거나 "
                 "문법 및 기능이 변경될 수 있습니다.\n\n"
                 "사용하면서 발견한 오류나 개선 의견이 있다면 "
                 "보기 메뉴에서 보고를 클릭하여 폼을 작성해 주세요.\n"
-                "폼을 작성해 주시면 Han의 발전에 큰 도움이 됩니다.\n\n"
-                "Han Programming Language"
+                "폼을 작성해 주시면 Hangullo의 발전에 큰 도움이 됩니다.\n\n"
+                "Hangullo Programming Language"
             )
         )
 
@@ -1708,12 +1708,12 @@ class HanIDE:
 
     def show_about(self) -> None:
         messagebox.showinfo(
-            "Han IDE 정보",
+            "Hangullo IDE 정보",
             (
-                "Han IDE 0.1 Beta\n\n"
-                "한국어 기반 프로그래밍 언어 Han의 개발 환경입니다.\n\n"
-                "Han Programming Language\n"
-                "Copyright (c) 2026 Han Project"
+                "Hangullo IDE 0.1 Beta\n\n"
+                "한국어 기반 프로그래밍 언어 Hangullo의 개발 환경입니다.\n\n"
+                "Hangullo Programming Language\n"
+                "Copyright (c) 2026 Hangullo Project"
             )
         )
 
@@ -1849,7 +1849,7 @@ class HanIDE:
 
             return (
                 "┌────────────────────────────────────────\n"
-                "│ Han 오류\n"
+                "│ Hangullo 오류\n"
                 "├────────────────────────────────────────\n"
                 "│ 오류 코드: H4000\n"
                 "│ 오류 종류: 실행 오류\n"
@@ -1863,21 +1863,21 @@ class HanIDE:
                 "│\n"
                 f"│ 해결 방법: {solution}\n"
                 "│\n"
-                "│ 이 오류 메시지를 복사하여 Han 커뮤니티에\n"
+                "│ 이 오류 메시지를 복사하여 Hangullo 커뮤니티에\n"
                 "│ 질문하면 문제 해결에 도움을 받을 수 있습니다.\n"
                 "└────────────────────────────────────────\n"
             )
 
         return (
             "┌────────────────────────────────────────\n"
-            "│ Han 오류\n"
+            "│ Hangullo 오류\n"
             "├────────────────────────────────────────\n"
             "│ 오류 코드: H4000\n"
             "│ 오류 종류: 실행 오류\n"
             "│\n"
             f"│ {text.strip()}\n"
             "│\n"
-            "│ 이 오류 메시지를 복사하여 Han 커뮤니티에\n"
+            "│ 이 오류 메시지를 복사하여 Hangullo 커뮤니티에\n"
             "│ 질문하면 문제 해결에 도움을 받을 수 있습니다.\n"
             "└────────────────────────────────────────\n"
         )
@@ -2025,7 +2025,7 @@ class HanIDE:
         ).pack(side=RIGHT)
 
 def main() -> None:
-    app = HanIDE()
+    app = HangulloIDE()
     app.run()
     
 if __name__ == "__main__":

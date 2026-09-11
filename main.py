@@ -68,7 +68,7 @@ def main() -> None:
     should_run = len(sys.argv) == 3 and sys.argv[2] == "--실행"
 
     if not source_path.endswith(".han"):
-        print("오류: Han 소스 파일은 .han 확장자를 사용해야 합니다.")
+        print("오류: Hangullo 소스 파일은 .han 확장자를 사용해야 합니다.")
         return
 
     if len(sys.argv) == 3 and not should_run:

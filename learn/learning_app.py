@@ -8,11 +8,11 @@ LESSONS = [
     {
         "title": "1. 시작하기", "path": "01_hello.han",
         "summary": "프로그램 구조와 출력 명령어를 익힙니다.",
-        "goal": "Han 파일을 열고 F5로 첫 결과를 확인합니다.",
-        "body": "Han 소스 파일의 확장자는 .han입니다. 프로그램은 위에서 아래 순서로 실행됩니다.\n\n출력 명령어는 뒤의 표현식 값을 터미널에 표시합니다. 문자열은 큰따옴표로 감쌉니다.",
+        "goal": "Hangullo 파일을 열고 F5로 첫 결과를 확인합니다.",
+        "body": "Hangullo 소스 파일의 확장자는 .han입니다. 프로그램은 위에서 아래 순서로 실행됩니다.\n\n출력 명령어는 뒤의 표현식 값을 터미널에 표시합니다. 문자열은 큰따옴표로 감쌉니다.",
         "syntax": "출력 값\n출력 \"문자열\"",
-        "example": "출력 \"안녕하세요, Han!\"\n출력 \"한국어로 프로그램을 작성합니다.\"",
-        "output": "안녕하세요, Han!\n한국어로 프로그램을 작성합니다.",
+        "example": "출력 \"안녕하세요, Hangullo!\"\n출력 \"한국어로 프로그램을 작성합니다.\"",
+        "output": "안녕하세요, Hangullo!\n한국어로 프로그램을 작성합니다.",
         "notes": "한 줄에 하나의 명령을 작성하면 읽기 쉽습니다.",
     },
     {
@@ -51,8 +51,8 @@ LESSONS = [
         "goal": "반복 횟수와 반복 블록의 범위를 이해합니다.",
         "body": "반복 뒤의 숫자나 변수 표현식만큼 블록을 실행합니다. 반복 블록은 끝으로 닫히며, 안에 조건문을 넣을 수 있습니다.",
         "syntax": "반복 횟수\n    명령\n끝",
-        "example": "변수 횟수 = 3\n반복 횟수\n    출력 \"Han을 연습합니다.\"\n끝",
-        "output": "Han을 연습합니다.\nHan을 연습합니다.\nHan을 연습합니다.",
+        "example": "변수 횟수 = 3\n반복 횟수\n    출력 \"Hangullo을 연습합니다.\"\n끝",
+        "output": "Hangullo을 연습합니다.\nHangullo을 연습합니다.\nHangullo을 연습합니다.",
         "notes": "반복 횟수가 0이면 블록은 실행되지 않습니다.",
     },
     {
@@ -61,8 +61,8 @@ LESSONS = [
         "goal": "함수 정의와 호출, 매개변수 전달을 익힙니다.",
         "body": "함수 정의는 함수 이름(매개변수)로 시작하고 끝으로 닫습니다. 정의만으로는 실행되지 않으며 이름과 괄호로 호출해야 합니다.",
         "syntax": "함수 이름(매개변수)\n    명령\n끝\n\n이름(인자)",
-        "example": "함수 인사(이름)\n    출력 \"안녕하세요, \" + 이름\n끝\n\n인사(\"Han 개발자\")\n인사(\"학습자\")",
-        "output": "안녕하세요, Han 개발자\n안녕하세요, 학습자",
+        "example": "함수 인사(이름)\n    출력 \"안녕하세요, \" + 이름\n끝\n\n인사(\"Hangullo 개발자\")\n인사(\"학습자\")",
+        "output": "안녕하세요, Hangullo 개발자\n안녕하세요, 학습자",
         "notes": "호출 인자 개수는 정의한 매개변수 개수와 맞아야 합니다.",
     },
     {
@@ -93,7 +93,7 @@ class LearningWindow(tk.Toplevel):
         super().__init__(parent)
         self.app = app
         self.lesson_index = 0
-        self.title("Han 배우기")
+        self.title("Hangullo 배우기")
         self.geometry("980x700")
         self.minsize(780, 540)
         self.transient(parent)
@@ -106,7 +106,7 @@ class LearningWindow(tk.Toplevel):
         sidebar = ttk.Frame(self, padding=12)
         sidebar.grid(row=0, column=0, sticky="nsew")
         sidebar.rowconfigure(1, weight=1)
-        ttk.Label(sidebar, text="Han 개발자 문서", font=("맑은 고딕", 16, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 12))
+        ttk.Label(sidebar, text="Hangullo 개발자 문서", font=("맑은 고딕", 16, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 12))
         self.lesson_list = tk.Listbox(sidebar, width=25, activestyle="none", exportselection=False)
         self.lesson_list.grid(row=1, column=0, sticky="nsew")
         self.lesson_list.bind("<<ListboxSelect>>", self._lesson_selected)

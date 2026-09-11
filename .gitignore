@@ -3,6 +3,6 @@ dist/
 __pycache___/
 build/
 dist/
-HanIDE.spec
+HangulloIDE.spec
 IDE/settings.json
 IDE/run.bat

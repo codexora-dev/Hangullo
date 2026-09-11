@@ -1,1 +1,1 @@
-"""Han language learning materials and learning window."""
+"""Hangullo language learning materials and learning window."""
