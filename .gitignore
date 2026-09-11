@@ -1,6 +1,6 @@
 dist/
 .han_temp/
-__pycache___/
+__pycache__/
 build/
 dist/
 HangulloIDE.spec
