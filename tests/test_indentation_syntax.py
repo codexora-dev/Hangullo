@@ -8,11 +8,11 @@ class IndentationSyntaxTests(unittest.TestCase):
     def test_blocks_use_colons_and_indentation(self):
         source = """변수 횟수 = 2
 반복 횟수:
-    출력 횟수
+    출력(횟수)
 만약 참:
-    출력 "참"
+    출력("참")
 아니면:
-    출력 "거짓"
+    출력("거짓")
 """
 
         tokens = Lexer(source).tokenize()
@@ -25,7 +25,13 @@ class IndentationSyntaxTests(unittest.TestCase):
         Parser(tokens).parse()
 
     def test_block_requires_indentation(self):
-        source = "만약 참:\n출력 \"실패\"\n"
+        source = "만약 참:\n출력(\"실패\")\n"
+
+        with self.assertRaises(SyntaxError):
+            Parser(Lexer(source).tokenize()).parse()
+
+    def test_print_requires_parentheses(self):
+        source = "출력 \"괄호 필요\"\n"
 
         with self.assertRaises(SyntaxError):
             Parser(Lexer(source).tokenize()).parse()

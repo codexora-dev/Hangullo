@@ -37,6 +37,7 @@ class Lexer:
         "%": "PERCENT",
         "(": "LPAREN",
         ")": "RPAREN",
+        ",": "COMMA",
         "=": "EQUAL",
         ":": "COLON",
         "<": "LT",

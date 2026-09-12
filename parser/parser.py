@@ -68,7 +68,10 @@ class Parser:
 
     def parse_print(self) -> PrintNode:
         self.advance()
-        return PrintNode(self.parse_expression())
+        self.consume("LPAREN", "출력 뒤에는 '('가 필요합니다.")
+        value = self.parse_expression()
+        self.consume("RPAREN", "출력 괄호를 닫아야 합니다.")
+        return PrintNode(value)
 
     def parse_var_declaration(self) -> VarAssignNode:
         self.advance()
@@ -107,19 +110,19 @@ class Parser:
 
     def parse_input(self) -> InputNode:
         self.advance()
+        self.consume("LPAREN", "입력 뒤에는 '('가 필요합니다.")
 
         name = self.consume(
             "IDENTIFIER",
             "입력을 저장할 변수 이름이 필요합니다."
         ).value
 
-        if self.current().type in {"NEWLINE", "EOF"}:
-            return InputNode(name)
+        prompt = None
+        if self.match("COMMA"):
+            prompt = self.parse_expression()
 
-        return InputNode(
-            name,
-            self.parse_expression()
-        )
+        self.consume("RPAREN", "입력 괄호를 닫아야 합니다.")
+        return InputNode(name, prompt)
 
     def parse_if(self) -> IfNode:
         self.advance()
