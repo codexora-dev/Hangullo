@@ -1,5 +1,6 @@
 import unittest
 
+from errors import HangulloParserError
 from lexer.lexer import Lexer
 from parser.parser import Parser
 
@@ -27,13 +28,13 @@ class IndentationSyntaxTests(unittest.TestCase):
     def test_block_requires_indentation(self):
         source = "만약 참:\n출력(\"실패\")\n"
 
-        with self.assertRaises(SyntaxError):
+        with self.assertRaises(HangulloParserError):
             Parser(Lexer(source).tokenize()).parse()
 
     def test_print_requires_parentheses(self):
         source = "출력 \"괄호 필요\"\n"
 
-        with self.assertRaises(SyntaxError):
+        with self.assertRaises(HangulloParserError):
             Parser(Lexer(source).tokenize()).parse()
 
 

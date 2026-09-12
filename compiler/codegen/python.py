@@ -9,6 +9,7 @@ from parser.nodes import (
     PrintNode,
     ProgramNode,
     RepeatNode,
+    ReturnNode,
     UnaryOpNode,
     VarAssignNode,
 )
@@ -67,6 +68,9 @@ class PythonCodeGenerator:
         if isinstance(node, IfNode):
             lines = [f"{prefix}if {self.generate_expression(node.condition)}:"]
             lines.extend(self.generate_body(node.then_body, indent + 1))
+            for condition, body in node.elif_branches or []:
+                lines.append(f"{prefix}elif {self.generate_expression(condition)}:")
+                lines.extend(self.generate_body(body, indent + 1))
             if node.else_body:
                 lines.append(f"{prefix}else:")
                 lines.extend(self.generate_body(node.else_body, indent + 1))
@@ -92,6 +96,11 @@ class PythonCodeGenerator:
             )
 
             return lines
+
+        if isinstance(node, ReturnNode):
+            if indent == 0:
+                raise HangulloCompilerError("반환문은 함수 안에서만 사용할 수 있습니다.")
+            return [f"{prefix}return {self.generate_expression(node.value)}"]
 
         raise HangulloCompilerError(
             f"지원하지 않는 AST 노드입니다: {type(node).__name__}"
@@ -120,6 +129,10 @@ class PythonCodeGenerator:
             )
 
             return f"{node.name}({arguments})"
+
+        if isinstance(node, InputNode):
+            prompt = self.generate_expression(node.prompt) if node.prompt else "''"
+            return f"input({prompt})"
 
         if isinstance(node, UnaryOpNode):
             operator = self.UNARY_OPERATORS[node.operator]

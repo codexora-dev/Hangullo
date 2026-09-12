@@ -10,11 +10,13 @@
 |---|---|
 | 문서명 | Hangullo Language Specification |
 | 프로젝트 | Hangullo Programming Language |
-| 버전 | 0.1 |
+| 버전 | v0.0.1-beta |
 | 상태 | 초안 |
 | 목적 | Hangullo 언어의 구조와 동작 기준 정의 |
 
 ---
+
+이 문서는 장기 설계 내용을 포함합니다. 현재 구현과 사용법의 기준은 `Hangullo_Grammar.md`이며, 이 beta 버전에서 지원하지 않는 항목은 예정 또는 설계 내용으로만 취급합니다.
 
 # 1. 개요
 

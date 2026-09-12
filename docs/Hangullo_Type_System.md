@@ -10,7 +10,7 @@
 |---|---|
 | 문서명 | Hangullo Type System |
 | 프로젝트 | Hangullo Programming Language |
-| 버전 | 0.1 Draft |
+| 버전 | v0.0.1-beta |
 | 상태 | 초기 설계 문서 |
 | 목적 | Hangullo 언어의 자료형(Type System) 정의 |
 

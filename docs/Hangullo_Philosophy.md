@@ -10,7 +10,7 @@
 |---|---|
 | 문서명 | Hangullo Language Philosophy|
 | 프로젝트 | Hangullo Programming Language |
-| 버전 | 0.1 |
+| 버전 | v0.0.1-beta |
 | 상태 | 초안 |
 | 작성 목적 | Hangullo 언어의 핵심 가치와 설계 원칙 정의 |
 

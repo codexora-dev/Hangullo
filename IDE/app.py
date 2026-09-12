@@ -1710,10 +1710,10 @@ class HangulloIDE:
 
     def show_welcome_message(self) -> None:
         messagebox.showinfo(
-            "Hangullo IDE 0.1 Beta",
+            "Hangullo IDE v0.0.1-beta",
             (
                 "Hangullo IDE에 오신 것을 환영합니다!\n\n"
-                "현재 Hangullo IDE는 0.1 Beta 버전입니다.\n"
+                "현재 Hangullo IDE는 v0.0.1-beta 버전입니다.\n"
                 "아직 개발 중인 버전이므로 오류가 발생하거나 "
                 "문법 및 기능이 변경될 수 있습니다.\n\n"
                 "사용하면서 발견한 오류나 개선 의견이 있다면 "
@@ -1730,7 +1730,7 @@ class HangulloIDE:
         messagebox.showinfo(
             "Hangullo IDE 정보",
             (
-                "Hangullo IDE 0.1 Beta\n\n"
+                "Hangullo IDE v0.0.1-beta\n\n"
                 "한국어 기반 프로그래밍 언어 Hangullo의 개발 환경입니다.\n\n"
                 "Hangullo Programming Language\n"
                 "Copyright (c) 2026 Hangullo Project"

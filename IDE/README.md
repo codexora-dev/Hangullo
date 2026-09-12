@@ -1,11 +1,11 @@
-# Hangullo IDE
+# Hangullo IDE v0.0.1-beta
 
 Hangullo 언어를 편집하고 실행하기 위한 Python 기반 IDE입니다.
 
 ## 실행
 
 ```powershell
-cd C:\Users\PC\Desktop\IDE
+cd C:\Users\PC\Desktop\Hangullo\IDE
 python app.py
 ```
 

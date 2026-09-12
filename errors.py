@@ -104,6 +104,18 @@ class HangulloCompilerError(HangulloError):
             "컴파일 오류",
         )
 
+
+class HangulloRuntimeError(HangulloError):
+    def __init__(self, message, line=None, column=None, source_line=None):
+        super().__init__(
+            message,
+            line,
+            column,
+            source_line,
+            "H4000",
+            "실행 오류",
+        )
+
 PYTHON_ERROR_MESSAGES = {
     "NameError": (
         "정의되지 않은 이름입니다.",

@@ -33,6 +33,7 @@ class IfNode(Node):
     condition: Node
     then_body: list[Node]
     else_body: list[Node]
+    elif_branches: list[tuple[Node, list[Node]]] | None = None
 
 
 @dataclass
@@ -73,3 +74,8 @@ class FunctionNode(Node):
     name: str
     parameters: list
     body: list
+
+
+@dataclass
+class ReturnNode(Node):
+    value: Node

@@ -5,6 +5,14 @@ import sys
 from pathlib import Path
 
 from compiler.codegen.python import PythonCodeGenerator
+from errors import (
+    HangulloCompilerError,
+    HangulloError,
+    HangulloLexerError,
+    HangulloParserError,
+    HangulloRuntimeError,
+    translate_python_error,
+)
 from lexer.lexer import Lexer
 from parser.parser import Parser
 
@@ -50,7 +58,7 @@ def compile_file(path: str) -> str:
     source = Path(path).read_text(encoding="utf-8")
 
     tokens = Lexer(source).tokenize()
-    ast = Parser(tokens).parse()
+    ast = Parser(tokens, source).parse()
     python_code = PythonCodeGenerator().generate(ast)
     # print("===== GENERATED PYTHON =====")
     # print(python_code)
@@ -71,6 +79,10 @@ def main() -> None:
         print("오류: Hangullo 소스 파일은 .hg 확장자를 사용해야 합니다.")
         return
 
+    if not Path(source_path).is_file():
+        print(f"오류: 파일을 찾을 수 없습니다: {source_path}")
+        return
+
     if len(sys.argv) == 3 and not should_run:
         print("오류: 알 수 없는 옵션입니다. 실행하려면 --실행 을 사용하세요.")
         return
@@ -84,8 +96,14 @@ def main() -> None:
             exec(python_code, ns)
         else:
             print(python_code)
+    except HangulloError as error:
+        print(error.format())
     except Exception as error:
-        print(f"컴파일 오류: {error}")
+        title, solution = translate_python_error(type(error).__name__, str(error))
+        runtime_error = HangulloRuntimeError(
+            f"{title} {error}\n해결 방법: {solution}"
+        )
+        print(runtime_error.format())
 
 
 if __name__ == "__main__":

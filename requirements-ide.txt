@@ -1,0 +1,2 @@
+# IDE executable build dependency only
+pyinstaller>=6.0
