@@ -100,7 +100,6 @@ KEYWORDS = {
     "만약",
     "아니면",
     "반복",
-    "끝",
     "참",
     "거짓",
     "그리고",
@@ -239,6 +238,8 @@ class EditorTab(ttk.Frame):
         self.text.insert("1.0", content)
         self.text.edit_modified(False)
         self.text.bind("<<Modified>>", self._on_modified)
+        self.text.bind("<Return>", self._auto_indent)
+        self.text.bind("<BackSpace>", self._smart_backspace)
         self.text.bind("<KeyRelease>", self._schedule_highlight)
         self.text.bind("<ButtonRelease-1>", self._cursor_changed)
         self.text.bind("<MouseWheel>", self._view_changed)
@@ -327,6 +328,25 @@ class EditorTab(ttk.Frame):
             self.app.refresh_tab_title(self)
             self.text.edit_modified(False)
         self._cursor_changed()
+
+    def _auto_indent(self, _event=None):
+        line_start = self.text.index("insert linestart")
+        line = self.text.get(line_start, "insert lineend")
+        indentation = re.match(r"[ \t]*", line).group()
+        if line.strip().endswith(":"):
+            indentation += "    "
+
+        self.text.insert("insert", "\n" + indentation)
+        return "break"
+
+    def _smart_backspace(self, _event=None):
+        line_start = self.text.index("insert linestart")
+        prefix = self.text.get(line_start, "insert")
+        if prefix.strip() == "" and prefix.endswith("    "):
+            self.text.delete("insert -4c", "insert")
+            return "break"
+
+        return None
 
     def _cursor_changed(self, _event=None) -> None:
         self.app.update_status()

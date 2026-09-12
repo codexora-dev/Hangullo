@@ -31,8 +31,10 @@ class Parser:
 
         self.skip_newlines()
         while self.current().type not in stop_tokens:
-            statements.append(self.parse_statement())
-            self.consume_statement_end()
+            statement = self.parse_statement()
+            statements.append(statement)
+            if not isinstance(statement, (IfNode, RepeatNode, FunctionNode)):
+                self.consume_statement_end()
             self.skip_newlines()
 
         return statements
@@ -111,7 +113,7 @@ class Parser:
             "입력을 저장할 변수 이름이 필요합니다."
         ).value
 
-        if self.current().type in {"NEWLINE", "EOF", "END", "ELSE"}:
+        if self.current().type in {"NEWLINE", "EOF"}:
             return InputNode(name)
 
         return InputNode(
@@ -122,24 +124,30 @@ class Parser:
     def parse_if(self) -> IfNode:
         self.advance()
         condition = self.parse_expression()
+        self.consume("COLON", "만약 문 뒤에는 ':'가 필요합니다.")
         self.consume_statement_end()
 
-        then_body = self.parse_block(stop_tokens={"ELSE", "END", "EOF"})
+        self.consume("INDENT", "만약 문 안에 들여쓴 코드가 필요합니다.")
+        then_body = self.parse_block(stop_tokens={"DEDENT", "EOF"})
+        self.consume("DEDENT", "만약 문 블록의 들여쓰기가 필요합니다.")
         else_body = []
 
         if self.match("ELSE"):
+            self.consume("COLON", "아니면 문 뒤에는 ':'가 필요합니다.")
             self.consume_statement_end()
-            else_body = self.parse_block(stop_tokens={"END", "EOF"})
-
-        self.consume("END", "만약 문은 '끝'으로 닫아야 합니다.")
+            self.consume("INDENT", "아니면 문 안에 들여쓴 코드가 필요합니다.")
+            else_body = self.parse_block(stop_tokens={"DEDENT", "EOF"})
+            self.consume("DEDENT", "아니면 블록의 들여쓰기가 필요합니다.")
         return IfNode(condition, then_body, else_body)
 
     def parse_repeat(self) -> RepeatNode:
         self.advance()
         count = self.parse_expression()
+        self.consume("COLON", "반복 문 뒤에는 ':'가 필요합니다.")
         self.consume_statement_end()
-        body = self.parse_block(stop_tokens={"END", "EOF"})
-        self.consume("END", "반복 문은 '끝'으로 닫아야 합니다.")
+        self.consume("INDENT", "반복 문 안에 들여쓴 코드가 필요합니다.")
+        body = self.parse_block(stop_tokens={"DEDENT", "EOF"})
+        self.consume("DEDENT", "반복 문 블록의 들여쓰기가 필요합니다.")
         return RepeatNode(count, body)
 
     def parse_expression(self):
@@ -302,16 +310,11 @@ class Parser:
             "함수 매개변수를 닫으려면 ')'가 필요합니다."
         )
 
+        self.consume("COLON", "함수 정의 뒤에는 ':'가 필요합니다.")
         self.consume_statement_end()
-
-        body = self.parse_block(
-            stop_tokens={"END", "EOF"}
-        )
-
-        self.consume(
-            "END",
-            "함수 정의는 '끝'으로 닫아야 합니다."
-        )
+        self.consume("INDENT", "함수 안에 들여쓴 코드가 필요합니다.")
+        body = self.parse_block(stop_tokens={"DEDENT", "EOF"})
+        self.consume("DEDENT", "함수 블록의 들여쓰기가 필요합니다.")
 
         return FunctionNode(
             name,
@@ -320,7 +323,7 @@ class Parser:
         )
 
     def consume_statement_end(self) -> None:
-        if self.current().type in {"NEWLINE", "EOF", "END", "ELSE"}:
+        if self.current().type in {"NEWLINE", "EOF"}:
             self.match("NEWLINE")
             return
 
