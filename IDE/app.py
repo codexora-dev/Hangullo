@@ -5,8 +5,8 @@ import os
 import threading
 import queue
 import re
-import shutil
 import sys
+import ctypes
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
@@ -209,6 +209,9 @@ class EditorTab(ttk.Frame):
         self.path = path
         self.dirty = False
         self._highlight_job = None
+        self._last_key_activity = 0.0
+        self._imm32 = None
+        self._ime_api_unavailable = False
         self.call_hint = None
 
         self.rowconfigure(0, weight=1)
@@ -251,7 +254,8 @@ class EditorTab(ttk.Frame):
         self.text.bind("<<Modified>>", self._on_modified)
         self.text.bind("<Return>", self._auto_indent)
         self.text.bind("<BackSpace>", self._smart_backspace)
-        self.text.bind("<KeyRelease>", self._schedule_highlight)
+        self.text.bind("<KeyPress>", self._on_key_press)
+        self.text.bind("<KeyRelease>", self._on_key_release)
         self.text.bind("<ButtonRelease-1>", self._on_cursor_click)
         self.text.bind("<MouseWheel>", self._view_changed)
         self.text.bind("<Configure>", self._view_changed)
@@ -311,6 +315,12 @@ class EditorTab(ttk.Frame):
             self.block_editor.apply_settings()
 
     def highlight(self) -> None:
+        if not self.winfo_exists():
+            return
+        if self._ime_composition_active():
+            self._schedule_highlight()
+            return
+
         for tag in ("keyword", "boolean", "string", "number", "comment", "operator"):
             self.text.tag_remove(tag, "1.0", END)
 
@@ -339,10 +349,68 @@ class EditorTab(ttk.Frame):
 
     def _schedule_highlight(self, _event=None) -> None:
         if self._highlight_job is not None:
-            self.after_cancel(self._highlight_job)
-        self._highlight_job = self.after(120, self.highlight)
-        self._update_call_hint(_event)
+            try:
+                self.after_cancel(self._highlight_job)
+            except tk.TclError:
+                pass
+            self._highlight_job = None
+        try:
+            self._highlight_job = self.after(450, self._run_highlight)
+        except tk.TclError:
+            self._highlight_job = None
+
+    def _run_highlight(self) -> None:
+        self._highlight_job = None
+        if not self.winfo_exists():
+            return
+        elapsed = time.monotonic() - self._last_key_activity
+        if elapsed < 0.45:
+            try:
+                self._highlight_job = self.after(round((0.45 - elapsed) * 1000), self._run_highlight)
+            except tk.TclError:
+                self._highlight_job = None
+            return
+        self.highlight()
+
+    def _ime_composition_active(self) -> bool:
+        if sys.platform != "win32":
+            return False
+        if self._ime_api_unavailable:
+            return False
+
+        try:
+            if self._imm32 is None:
+                self._imm32 = ctypes.WinDLL("imm32", use_last_error=True)
+                self._imm32.ImmGetContext.argtypes = [ctypes.c_void_p]
+                self._imm32.ImmGetContext.restype = ctypes.c_void_p
+                self._imm32.ImmReleaseContext.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+                self._imm32.ImmReleaseContext.restype = ctypes.c_int
+                self._imm32.ImmGetCompositionStringW.argtypes = [
+                    ctypes.c_void_p,
+                    ctypes.c_uint,
+                    ctypes.c_void_p,
+                    ctypes.c_uint,
+                ]
+                self._imm32.ImmGetCompositionStringW.restype = ctypes.c_long
+
+            context = self._imm32.ImmGetContext(self.text.winfo_id())
+            if not context:
+                return False
+            try:
+                composition_length = self._imm32.ImmGetCompositionStringW(context, 0x0008, None, 0)
+                return composition_length > 0
+            finally:
+                self._imm32.ImmReleaseContext(self.text.winfo_id(), context)
+        except (AttributeError, OSError, tk.TclError):
+            self._ime_api_unavailable = True
+            return False
+
+    def _on_key_release(self, event=None) -> None:
+        self._update_call_hint(event)
         self._cursor_changed()
+
+    def _on_key_press(self, _event=None) -> None:
+        self._last_key_activity = time.monotonic()
 
     def _update_call_hint(self, event=None) -> None:
         if event is None:
@@ -425,6 +493,7 @@ class EditorTab(ttk.Frame):
             self.dirty = True
             self.app.refresh_tab_title(self)
             self.text.edit_modified(False)
+            self._schedule_highlight()
         self._cursor_changed()
 
     def _auto_indent(self, _event=None):
@@ -447,8 +516,20 @@ class EditorTab(ttk.Frame):
         return None
 
     def _cursor_changed(self, _event=None) -> None:
+        if self._ime_composition_active():
+            return
         self.app.update_status()
         self.line_numbers.redraw()
+
+    def destroy(self) -> None:
+        if self._highlight_job is not None:
+            try:
+                self.after_cancel(self._highlight_job)
+            except tk.TclError:
+                pass
+            self._highlight_job = None
+        self._hide_call_hint()
+        super().destroy()
 
     def _view_changed(self, _event=None) -> None:
         self.after_idle(self.line_numbers.redraw)
@@ -1130,6 +1211,9 @@ class HangulloIDE:
         self.workspace = Path(self.settings.han_root)
 
         self.in_process_run = False
+        self._closing = False
+        self._run_finished = threading.Event()
+        self._run_thread: threading.Thread | None = None
         self.console_input_active = False
         self.output_queue: queue.Queue[tuple[str, str]] = queue.Queue()
         self.console_input_start = "1.0"
@@ -1531,6 +1615,9 @@ class HangulloIDE:
 
         if tab is None:
             return
+        if self.in_process_run or (self._run_thread is not None and self._run_thread.is_alive()):
+            self.write_console("이미 실행 중인 프로그램이 있습니다.\n", "muted")
+            return
 
         if tab.path is None:
             if not self.save_current_as():
@@ -1562,6 +1649,7 @@ class HangulloIDE:
         self.console.mark_set("insert", self.console_input_start)
 
         self.in_process_run = True
+        self._run_finished.clear()
         self._process_output_loop()
 
         def execute_code() -> None:
@@ -1589,14 +1677,13 @@ class HangulloIDE:
                 import traceback
                 traceback.print_exc(file=QueueStream(self.output_queue, "stderr"))
             finally:
-                self.root.after(0, self._finish_in_process_run)
+                self._run_finished.set()
 
-        threading.Thread(target=execute_code, daemon=True).start()
+        self._run_thread = threading.Thread(target=execute_code, daemon=True)
+        self._run_thread.start()
 
     def _finish_in_process_run(self) -> None:
-        self._process_output_loop()
-        if not self.output_queue.empty():
-            self.root.after(30, self._finish_in_process_run)
+        if self._closing:
             return
 
         self.in_process_run = False
@@ -1894,6 +1981,12 @@ class HangulloIDE:
             )
             return
 
+        self._closing = True
+        self.in_process_run = False
+        self.console_input_active = False
+        if self.console_input_queue is not None:
+            self.console_input_queue.put("")
+        self.console_input_queue = None
         self.root.destroy()
 
     def run(self) -> None:
@@ -2111,7 +2204,9 @@ class HangulloIDE:
         except queue.Empty:
             pass
 
-        if self.in_process_run or not self.output_queue.empty():
+        if self._run_finished.is_set() and self.output_queue.empty():
+            self._finish_in_process_run()
+        elif self.in_process_run or not self.output_queue.empty():
             self.root.after(30, self._process_output_loop)
     def stop_process(self) -> None:
         if not self.in_process_run:
