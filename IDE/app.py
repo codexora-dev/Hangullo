@@ -42,6 +42,7 @@ from tkinter import (
     ttk,
 )
 from compiler.codegen.python import PythonCodeGenerator
+from IDE.block_editor import BlockEditor
 from lexer.lexer import Lexer
 from parser.parser import Parser
 from errors import HangulloError
@@ -116,6 +117,11 @@ STRING_PATTERN = re.compile(r'"(?:\\.|[^"\\])*"')
 NUMBER_PATTERN = re.compile(r"(?<![\w가-힣])\d+(?:\.\d+)?(?![\w가-힣])")
 COMMENT_PATTERN = re.compile(r"(#.*|//.*)$")
 OPERATOR_PATTERN = re.compile(r"(==|!=|<=|>=|[+\-*/%=<>])")
+
+CALL_HINTS = {
+    "출력": ("출력(값)", "값: 문자열, 숫자, 변수 또는 계산식"),
+    "입력": ("입력(변수, 안내 문구)", "안내 문구는 선택 사항입니다."),
+}
 
 
 class QueueStream:
@@ -203,6 +209,7 @@ class EditorTab(ttk.Frame):
         self.path = path
         self.dirty = False
         self._highlight_job = None
+        self.call_hint = None
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
@@ -227,6 +234,10 @@ class EditorTab(ttk.Frame):
         self.line_numbers.text_widget = self.text
         self.text.grid(row=0, column=1, sticky="nsew")
 
+        self.block_editor = BlockEditor(self, app, content)
+        self.block_editor.grid(row=0, column=1, sticky="nsew")
+        self.block_editor.grid_remove()
+
         y_scroll = ttk.Scrollbar(self, orient=VERTICAL, command=self._scroll_y)
         y_scroll.grid(row=0, column=2, sticky="ns")
         self.text.configure(yscrollcommand=lambda *args: self._text_scrolled(y_scroll, *args))
@@ -241,9 +252,10 @@ class EditorTab(ttk.Frame):
         self.text.bind("<Return>", self._auto_indent)
         self.text.bind("<BackSpace>", self._smart_backspace)
         self.text.bind("<KeyRelease>", self._schedule_highlight)
-        self.text.bind("<ButtonRelease-1>", self._cursor_changed)
+        self.text.bind("<ButtonRelease-1>", self._on_cursor_click)
         self.text.bind("<MouseWheel>", self._view_changed)
         self.text.bind("<Configure>", self._view_changed)
+        self.text.bind("<FocusOut>", lambda _event: self._hide_call_hint())
 
         self.apply_settings()
         self.highlight()
@@ -255,6 +267,13 @@ class EditorTab(ttk.Frame):
 
     def content(self) -> str:
         return self.text.get("1.0", "end-1c")
+
+    def set_content_from_block(self, source: str) -> None:
+        self.text.delete("1.0", END)
+        self.text.insert("1.0", source)
+        self.text.edit_modified(False)
+        self.dirty = True
+        self.app.refresh_tab_title(self)
 
     def mark_clean(self) -> None:
         self.dirty = False
@@ -288,6 +307,8 @@ class EditorTab(ttk.Frame):
         self.text.tag_configure("operator", foreground=p["operator"])
         self.text.tag_configure("search", background=p["accent"], foreground="#ffffff")
         self.highlight()
+        if hasattr(self, "block_editor"):
+            self.block_editor.apply_settings()
 
     def highlight(self) -> None:
         for tag in ("keyword", "boolean", "string", "number", "comment", "operator"):
@@ -320,7 +341,84 @@ class EditorTab(ttk.Frame):
         if self._highlight_job is not None:
             self.after_cancel(self._highlight_job)
         self._highlight_job = self.after(120, self.highlight)
+        self._update_call_hint(_event)
         self._cursor_changed()
+
+    def _update_call_hint(self, event=None) -> None:
+        if event is None:
+            return
+        if event.char == "(":
+            line_before_cursor = self.text.get("insert linestart", "insert")[:-1].rstrip()
+            hint = self._call_hint_for(line_before_cursor)
+            if hint:
+                self._show_call_hint(*hint)
+                return
+        if event.char in {")", "\n"} or event.keysym in {"Escape", "BackSpace", "Delete", "Return", "Left", "Right", "Up", "Down"}:
+            self._hide_call_hint()
+
+    def _call_hint_for(self, text_before_parenthesis: str):
+        for name, hint in CALL_HINTS.items():
+            if text_before_parenthesis.endswith(name):
+                return hint
+
+        definition = re.search(r"함수\s+([\w가-힣_]+)$", text_before_parenthesis)
+        if definition:
+            return (f"함수 {definition.group(1)}(매개변수, ...)", "매개변수 이름을 쉼표로 구분해 입력하세요.")
+
+        called_name = re.search(r"([\w가-힣_]+)$", text_before_parenthesis)
+        if not called_name:
+            return None
+        name = called_name.group(1)
+        function_pattern = re.compile(rf"^\s*함수\s+{re.escape(name)}\(([^)]*)\)", re.MULTILINE)
+        match = function_pattern.search(self.content())
+        if match:
+            parameters = match.group(1).strip() or "인수 없음"
+            return (f"{name}({parameters})", "함수에 맞는 값을 쉼표로 구분해 입력하세요.")
+        return None
+
+    def _show_call_hint(self, signature: str, description: str) -> None:
+        self._hide_call_hint()
+        hint = tk.Toplevel(self.text)
+        hint.overrideredirect(True)
+        hint.attributes("-topmost", True)
+        p = self.app.palette
+        body = tk.Frame(hint, bg=p["panel2"], highlightthickness=1, highlightbackground=p["line"], padx=9, pady=6)
+        body.pack()
+        tk.Label(
+            body,
+            text=signature,
+            bg=p["panel2"],
+            fg=p["accent"],
+            font=(self.app.settings.font_family, 9, "bold"),
+            anchor="w",
+        ).pack(fill=X)
+        tk.Label(
+            body,
+            text=description,
+            bg=p["panel2"],
+            fg=p["muted"],
+            font=(self.app.settings.font_family, 8),
+            anchor="w",
+        ).pack(fill=X, pady=(2, 0))
+        bbox = self.text.bbox("insert")
+        if bbox is None:
+            hint.destroy()
+            return
+        x, y, _width, height = bbox
+        hint.geometry(f"+{self.text.winfo_rootx() + x}+{self.text.winfo_rooty() + y + height + 5}")
+        self.call_hint = hint
+
+    def _hide_call_hint(self) -> None:
+        if self.call_hint is not None:
+            try:
+                self.call_hint.destroy()
+            except tk.TclError:
+                pass
+            self.call_hint = None
+
+    def _on_cursor_click(self, event=None) -> None:
+        self._hide_call_hint()
+        self._cursor_changed(event)
 
     def _on_modified(self, _event=None) -> None:
         if self.text.edit_modified():
@@ -1039,6 +1137,7 @@ class HangulloIDE:
         self.console_input_queue: queue.Queue[str] | None = None
 
         self.mode = "텍스트 코딩"
+        self._initial_split_applied = False
 
         self._build_styles()
         self._build_menu()
@@ -1047,6 +1146,7 @@ class HangulloIDE:
         self.load_workspace(self.workspace)
         self.open_start_file()
         self._bind_shortcuts()
+        self.root.after(120, self._apply_initial_editor_console_ratio)
 
         if self.settings.first_run:
             self.show_welcome_message()
@@ -1112,63 +1212,93 @@ class HangulloIDE:
         menubar.add_cascade(label="도움말", menu=help_menu)
 
     def _build_layout(self) -> None:
-        self.toolbar = ttk.Frame(self.root, padding = (10,8))
+        self.header = ttk.Frame(self.root, style="Header.TFrame", padding=(16, 10))
+        self.header.pack(side=TOP, fill=X)
+        ttk.Label(self.header, text="Hangullo IDE", style="Brand.TLabel").pack(side=LEFT)
+        ttk.Label(self.header, text="코딩을 한글로 쉽고 간단하게", style="HeaderHint.TLabel").pack(side=LEFT, padx=(12, 0), pady=(3, 0))
+
+        self.toolbar = ttk.Frame(self.root, style="Toolbar.TFrame", padding=(12, 6))
         self.toolbar.pack(side=TOP, fill=X)
 
+        file_tools = ttk.Frame(self.toolbar, style="Toolbar.TFrame")
+        file_tools.pack(side=LEFT)
         for label, command in [
             ("새 파일", self.new_file),
             ("열기", self.open_file_dialog),
             ("저장", self.save_current),
-            ("컴파일", self.compile_current),
-            ("실행(F5)", self.run_current),
-            ("Python 코드", self.show_python_code),
-            ("Hangullo 배우기", self.open_learning),
-            ("설정", self.open_settings),
-            ("보고", self.open_report),
-            ("실행 중지", self.stop_process)
         ]:
+            ttk.Button(file_tools, text=label, command=command).pack(side=LEFT, padx=(0, 5))
 
-            ttk.Button(self.toolbar, text = label, command=command).pack(side=LEFT,padx=(0,6))
+        ttk.Separator(self.toolbar, orient=VERTICAL).pack(side=LEFT, fill=Y, padx=8, pady=2)
+        run_tools = ttk.Frame(self.toolbar, style="Toolbar.TFrame")
+        run_tools.pack(side=LEFT)
+        for label, command, style in [
+            ("컴파일", self.compile_current, ""),
+            ("실행 F5", self.run_current, "Primary.TButton"),
+            ("중지", self.stop_process, "")
+        ]:
+            ttk.Button(run_tools, text=label, command=command, style=style).pack(side=LEFT, padx=(0, 5))
+
+        right_tools = ttk.Frame(self.toolbar, style="Toolbar.TFrame")
+        right_tools.pack(side=RIGHT)
+        ttk.Button(right_tools, text="설정", command=self.open_settings).pack(side=RIGHT)
+        ttk.Button(right_tools, text="Python", command=self.show_python_code).pack(side=RIGHT, padx=(0, 5))
+        self.mode_button = ttk.Button(right_tools, text="블록 모드", command=self.toggle_mode, style="Mode.TButton")
+        self.mode_button.pack(side=RIGHT, padx=(0, 10))
+        self.mode_indicator = ttk.Label(right_tools, text="텍스트 코딩", style="ModeLabel.TLabel")
+        self.mode_indicator.pack(side=RIGHT, padx=(0, 7))
 
         self.main_pane = ttk.PanedWindow(self.root, orient=HORIZONTAL)
         self.main_pane.pack(side=TOP, fill=BOTH, expand=True)
 
         self.editor_pane = ttk.PanedWindow(self.main_pane, orient=VERTICAL)
-        self.main_pane.add(self.editor_pane, weigh=1)
+        self.main_pane.add(self.editor_pane, weight=1)
 
         self.notebook = ttk.Notebook(self.editor_pane)
-        self.editor_pane.add(self.notebook, weight=5)
+        self.editor_pane.add(self.notebook, weight=3)
 
-        self.notebook.bind("<<NotebookTabChanged>>", lambda _event: self.update_status())
+        self.notebook.bind("<<NotebookTabChanged>>", self._tab_changed)
 
         self.notebook.bind("<Button-3>", self._notebook_right_click)
 
-        console_frame = ttk.Frame(self.editor_pane)
-        self.editor_pane.add(console_frame, weight=1)
+        self.console_frame = ttk.Frame(self.editor_pane, style="Console.TFrame")
+        self.editor_pane.add(self.console_frame, weight=1)
 
-        console_top = ttk.Frame(console_frame)
+        console_top = ttk.Frame(self.console_frame, style="Console.TFrame", padding=(12, 4))
         console_top.pack(side=TOP, fill=X)
 
-        ttk.Label(console_top, text="콘솔", padding=(10, 6)).pack(side=LEFT)
+        ttk.Label(console_top, text="콘솔", style="ConsoleHeading.TLabel").pack(side=LEFT)
+        ttk.Label(console_top, text="실행 결과와 입력", style="ConsoleHint.TLabel").pack(side=LEFT, padx=(8, 0))
 
         ttk.Button(console_top, text="오류 복사", command=self.copy_error).pack(side=RIGHT, padx=(0, 8), pady=5)
 
         ttk.Button(console_top, text="지우기", command=self.clear_console).pack(side=RIGHT, padx=8, pady=5)
 
-        self.console = tk.Text(console_frame, height=9, state="disabled", borderwidth=0, highlightthickness=0, padx=12,pady=9)
+        self.console = tk.Text(self.console_frame, height=5, state="disabled", borderwidth=0, highlightthickness=0, padx=14, pady=10)
         self.console.pack(side=LEFT, fill=BOTH, expand=True)
 
         self.console.bind("<Return>", self._console_enter)
         self.console.bind("<BackSpace>", self._console_backspace)
         self.console.bind("<Key>", self._console_key)
 
-        console_scroll = ttk.Scrollbar(console_frame, orient=VERTICAL, command=self.console.yview)
+        console_scroll = ttk.Scrollbar(self.console_frame, orient=VERTICAL, command=self.console.yview)
         console_scroll.pack(side=RIGHT, fill=Y)
 
         self.console.configure(yscrollcommand=console_scroll.set)
 
-        self.status = ttk.Label(self.root,anchor="w",padding=(10,5))
+        self.status = ttk.Label(self.root, anchor="w", padding=(12, 5), style="Status.TLabel")
         self.status.pack(side=BOTTOM, fill=X)
+
+    def _apply_initial_editor_console_ratio(self) -> None:
+        if self._initial_split_applied:
+            return
+        self.root.update_idletasks()
+        height = self.editor_pane.winfo_height()
+        if height < 120:
+            self.root.after(60, self._apply_initial_editor_console_ratio)
+            return
+        self.editor_pane.sashpos(0, round(height * 0.75))
+        self._initial_split_applied = True
 
     def _bind_shortcuts(self) -> None:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -1193,6 +1323,19 @@ class HangulloIDE:
         self.style.configure("TLabel", background=p["panel"], foreground=p["fg"])
         self.style.configure("TButton", background=p["panel2"], foreground=p["fg"], padding=(10, 5), borderwidth=1)
         self.style.map("TButton", background=[("active", p["select"])])
+        self.style.configure("Header.TFrame", background=p["window"])
+        self.style.configure("Toolbar.TFrame", background=p["panel"])
+        self.style.configure("Brand.TLabel", background=p["window"], foreground=p["fg"], font=(self.settings.font_family, 14, "bold"))
+        self.style.configure("HeaderHint.TLabel", background=p["window"], foreground=p["muted"], font=(self.settings.font_family, 10))
+        self.style.configure("Primary.TButton", background=p["accent"], foreground="#ffffff", padding=(12, 5), borderwidth=0)
+        self.style.map("Primary.TButton", background=[("active", p["accent"])], foreground=[("active", "#ffffff")])
+        self.style.configure("Mode.TButton", background=p["panel2"], foreground=p["accent"], padding=(11, 5), borderwidth=1)
+        self.style.map("Mode.TButton", background=[("active", p["select"])])
+        self.style.configure("ModeLabel.TLabel", background=p["panel"], foreground=p["muted"], font=(self.settings.font_family, 9, "bold"))
+        self.style.configure("Console.TFrame", background=p["console"])
+        self.style.configure("ConsoleHeading.TLabel", background=p["console"], foreground=p["fg"], font=(self.settings.font_family, 10, "bold"))
+        self.style.configure("ConsoleHint.TLabel", background=p["console"], foreground=p["muted"], font=(self.settings.font_family, 9))
+        self.style.configure("Status.TLabel", background=p["panel"], foreground=p["muted"], font=(self.settings.font_family, 9))
         self.style.configure("Treeview", background=p["panel"], foreground=p["fg"], fieldbackground=p["panel"], rowheight=25, borderwidth=0)
         self.style.map("Treeview", background=[("selected", p["select"])], foreground=[("selected", p["fg"])])
         self.style.configure("TNotebook", background=p["panel"])
@@ -1208,6 +1351,54 @@ class HangulloIDE:
         for tab in self.tabs():
             tab.apply_settings()
         self.update_status()
+
+    def toggle_mode(self) -> None:
+        tab = self.current_tab()
+        if tab is None:
+            return
+
+        if self.mode == "텍스트 코딩":
+            try:
+                tab.block_editor.load_source(tab.content(), strict=True)
+            except HangulloError as error:
+                self.write_console(error.format() + "\n", "error")
+                return
+            self.mode = "블록 코딩"
+            tab.text.grid_remove()
+            tab.line_numbers.grid_remove()
+            tab.block_editor.grid()
+            self.mode_button.configure(text="텍스트 모드")
+            self.mode_indicator.configure(text="블록 코딩")
+            self.status.configure(text="블록 코딩 모드: 블록을 작업 영역으로 끌어오세요.")
+            return
+
+        tab.set_content_from_block(tab.block_editor.source())
+        tab.block_editor.grid_remove()
+        tab.text.grid()
+        if self.settings.show_line_numbers:
+            tab.line_numbers.grid()
+        self.mode = "텍스트 코딩"
+        self.mode_button.configure(text="블록 모드")
+        self.mode_indicator.configure(text="텍스트 코딩")
+        tab.highlight()
+        self.update_status()
+
+    def _tab_changed(self, _event=None) -> None:
+        tab = self.current_tab()
+        if tab is None:
+            self.update_status()
+            return
+        if self.mode == "블록 코딩":
+            tab.text.grid_remove()
+            tab.line_numbers.grid_remove()
+            tab.block_editor.grid()
+        self.update_status()
+
+    def block_source_changed(self, source: str) -> None:
+        tab = self.current_tab()
+        if tab is None or self.mode != "블록 코딩":
+            return
+        tab.set_content_from_block(source)
 
     def open_start_file(self) -> None:
         self.new_file()
