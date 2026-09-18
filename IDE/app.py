@@ -139,30 +139,44 @@ def load_reserved_words() -> list[dict[str, str]]:
     if not isinstance(data, list):
         return []
 
-    required_fields = {"word", "summary", "usage", "example"}
+    string_fields = {"word", "summary", "usage", "example", "category"}
+    required_fields = string_fields | {"python_words"}
     return [
         item
         for item in data
         if isinstance(item, dict)
         and required_fields.issubset(item)
-        and all(isinstance(item[field], str) for field in required_fields)
+        and all(isinstance(item[field], str) for field in string_fields)
+        and isinstance(item["python_words"], list)
+        and all(isinstance(word, str) for word in item["python_words"])
     ]
 
 
 RESERVED_WORDS = load_reserved_words()
 
 
-def search_reserved_words(query: str) -> list[dict[str, str]]:
+def search_reserved_words(query: str, category: str = "전체") -> list[dict[str, str]]:
     normalized_query = query.strip().casefold()
+    filtered_words = [
+        item
+        for item in RESERVED_WORDS
+        if category == "전체" or item["category"] == category
+    ]
     if not normalized_query:
-        return RESERVED_WORDS.copy()
+        return filtered_words
 
     return [
         item
-        for item in RESERVED_WORDS
-        if normalized_query in " ".join(
-            (item["word"], item["summary"], item["usage"])
-        ).casefold()
+        for item in filtered_words
+        if (
+            normalized_query == item["word"].casefold()
+            or normalized_query in " ".join(
+                (item["summary"], item["usage"])
+            ).casefold()
+            or normalized_query in {
+                python_word.casefold() for python_word in item["python_words"]
+            }
+        )
     ]
 
 
@@ -1242,7 +1256,9 @@ class ReservedWordsDialog(tk.Toplevel):
         self.transient(app.root)
 
         self.search_var = tk.StringVar()
+        self.category_var = tk.StringVar(value="전체")
         self.search_var.trace_add("write", self._refresh_results)
+        self.category_var.trace_add("write", self._refresh_results)
 
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
@@ -1257,11 +1273,18 @@ class ReservedWordsDialog(tk.Toplevel):
         ).grid(row=0, column=0, sticky="w")
         ttk.Label(
             header,
-            text="약속어 이름, 기능 설명, 사용 방법으로 검색할 수 있습니다.",
+            text="카테고리로 모아 보고, 이름과 설명으로 검색할 수 있습니다.",
             foreground=app.palette["muted"],
         ).grid(row=1, column=0, sticky="w", pady=(3, 8))
+        ttk.Combobox(
+            header,
+            textvariable=self.category_var,
+            values=["전체"] + sorted({item["category"] for item in RESERVED_WORDS}),
+            state="readonly",
+            width=18,
+        ).grid(row=2, column=0, sticky="w", pady=(0, 6))
         search_entry = ttk.Entry(header, textvariable=self.search_var)
-        search_entry.grid(row=2, column=0, sticky="ew")
+        search_entry.grid(row=3, column=0, sticky="ew")
         search_entry.focus_set()
 
         content = ttk.PanedWindow(self, orient=HORIZONTAL)
@@ -1270,9 +1293,16 @@ class ReservedWordsDialog(tk.Toplevel):
         list_frame = ttk.Frame(content, padding=(0, 0, 10, 0))
         list_frame.rowconfigure(0, weight=1)
         list_frame.columnconfigure(0, weight=1)
-        self.tree = ttk.Treeview(list_frame, columns=("word", "summary"), show="headings", selectmode="browse")
+        self.tree = ttk.Treeview(
+            list_frame,
+            columns=("category", "word", "summary"),
+            show="headings",
+            selectmode="browse",
+        )
+        self.tree.heading("category", text="분류")
         self.tree.heading("word", text="예약어")
         self.tree.heading("summary", text="기능")
+        self.tree.column("category", width=90, minwidth=80, stretch=False)
         self.tree.column("word", width=120, minwidth=90, stretch=False)
         self.tree.column("summary", width=260, minwidth=180)
         self.tree.grid(row=0, column=0, sticky="nsew")
@@ -1284,26 +1314,35 @@ class ReservedWordsDialog(tk.Toplevel):
 
         detail = ttk.Frame(content, padding=(10, 0, 0, 0))
         detail.columnconfigure(0, weight=1)
-        detail.rowconfigure(3, weight=1)
+        detail.rowconfigure(4, weight=1)
         self.detail_word = ttk.Label(detail, font=(app.settings.font_family, 16, "bold"))
         self.detail_word.grid(row=0, column=0, sticky="w")
         self.detail_summary = ttk.Label(detail, wraplength=360, foreground=app.palette["muted"])
         self.detail_summary.grid(row=1, column=0, sticky="w", pady=(6, 14))
         self.detail_usage = ttk.Label(detail, wraplength=360)
         self.detail_usage.grid(row=2, column=0, sticky="w", pady=(0, 8))
+        self.detail_python = ttk.Label(detail, wraplength=360, foreground=app.palette["muted"])
+        self.detail_python.grid(row=3, column=0, sticky="w", pady=(0, 8))
         self.detail_example = tk.Text(detail, height=8, wrap="none", state="disabled", borderwidth=0, highlightthickness=0)
-        self.detail_example.grid(row=3, column=0, sticky="nsew")
+        self.detail_example.grid(row=4, column=0, sticky="nsew")
         content.add(detail, weight=2)
 
         self._visible_items = []
         self._refresh_results()
 
     def _refresh_results(self, *_args) -> None:
-        self._visible_items = search_reserved_words(self.search_var.get())
+        self._visible_items = search_reserved_words(
+            self.search_var.get(),
+            self.category_var.get(),
+        )
         for item_id in self.tree.get_children():
             self.tree.delete(item_id)
         for item in self._visible_items:
-            self.tree.insert("", END, values=(item["word"], item["summary"]))
+            self.tree.insert(
+                "",
+                END,
+                values=(item["category"], item["word"], item["summary"]),
+            )
 
         if self._visible_items:
             first = self.tree.get_children()[0]
@@ -1317,9 +1356,11 @@ class ReservedWordsDialog(tk.Toplevel):
         if not selection:
             return
         item = self._visible_items[self.tree.index(selection[0])]
-        self.detail_word.configure(text=item["word"])
+        self.detail_word.configure(text=f"{item['category']} · {item['word']}")
         self.detail_summary.configure(text=item["summary"])
         self.detail_usage.configure(text=f"사용 방법: {item['usage']}")
+        python_words = ", ".join(item["python_words"]) or "대응하는 Python 예약어 없음"
+        self.detail_python.configure(text=f"Python 대응어: {python_words}")
         self.detail_example.configure(state="normal")
         self.detail_example.delete("1.0", END)
         self.detail_example.insert("1.0", item["example"])
@@ -1329,6 +1370,7 @@ class ReservedWordsDialog(tk.Toplevel):
         self.detail_word.configure(text="검색 결과 없음")
         self.detail_summary.configure(text="약속어 이름이나 기능과 관련된 단어를 검색해 보세요.")
         self.detail_usage.configure(text="")
+        self.detail_python.configure(text="")
         self.detail_example.configure(state="normal")
         self.detail_example.delete("1.0", END)
         self.detail_example.configure(state="disabled")
