@@ -52,6 +52,7 @@ from learn.learning_app import open_learning_window
 APP_DIR = Path(__file__).resolve().parent
 DEFAULT_HANGULLO_ROOT = APP_DIR.parent
 SETTINGS_FILE = APP_DIR / "settings.json"
+RESERVED_WORDS_FILE = APP_DIR / "reserved_words.json"
  
 THEMES = {
     "Hangullo Dark": {
@@ -110,11 +111,17 @@ KEYWORDS = {
 }
 
 KEYWORD_PATTERN = re.compile(
-    r"(?<![\w가-힣])(" + "|".join(map(re.escape, sorted(KEYWORDS, key=len, reverse=True))) + r")(?![\w가-힣])"
+    r"(?<!\w)("
+    + "|".join(map(re.escape, sorted(KEYWORDS, key=len, reverse=True)))
+    + r")(?!\w)"
 )
-BOOLEAN_PATTERN = re.compile(r"(?<![\w가-힣])(참|거짓)(?![\w가-힣])")
+BOOLEAN_PATTERN = re.compile(
+    r"(?<!\w)(참|거짓)(?!\w)"
+)
 STRING_PATTERN = re.compile(r'"(?:\\.|[^"\\])*"')
-NUMBER_PATTERN = re.compile(r"(?<![\w가-힣])\d+(?:\.\d+)?(?![\w가-힣])")
+NUMBER_PATTERN = re.compile(
+    r"(?<!\w)\d+(?:\.\d+)?(?!\w)"
+)
 COMMENT_PATTERN = re.compile(r"(#.*|//.*)$")
 OPERATOR_PATTERN = re.compile(r"(==|!=|<=|>=|[+\-*/%=<>])")
 
@@ -122,6 +129,41 @@ CALL_HINTS = {
     "출력": ("출력(값)", "값: 문자열, 숫자, 변수 또는 계산식"),
     "입력": ("입력(변수, 안내 문구)", "안내 문구는 선택 사항입니다."),
 }
+
+def load_reserved_words() -> list[dict[str, str]]:
+    try:
+        data = json.loads(RESERVED_WORDS_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    if not isinstance(data, list):
+        return []
+
+    required_fields = {"word", "summary", "usage", "example"}
+    return [
+        item
+        for item in data
+        if isinstance(item, dict)
+        and required_fields.issubset(item)
+        and all(isinstance(item[field], str) for field in required_fields)
+    ]
+
+
+RESERVED_WORDS = load_reserved_words()
+
+
+def search_reserved_words(query: str) -> list[dict[str, str]]:
+    normalized_query = query.strip().casefold()
+    if not normalized_query:
+        return RESERVED_WORDS.copy()
+
+    return [
+        item
+        for item in RESERVED_WORDS
+        if normalized_query in " ".join(
+            (item["word"], item["summary"], item["usage"])
+        ).casefold()
+    ]
 
 
 class QueueStream:
@@ -1190,6 +1232,108 @@ class SettingsDialog(tk.Toplevel):
         self.destroy()
 
 
+class ReservedWordsDialog(tk.Toplevel):
+    def __init__(self, app: "HangulloIDE"):
+        super().__init__(app.root)
+        self.app = app
+        self.title("Hangullo 예약어 목록")
+        self.geometry("780x560")
+        self.minsize(650, 440)
+        self.transient(app.root)
+
+        self.search_var = tk.StringVar()
+        self.search_var.trace_add("write", self._refresh_results)
+
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+
+        header = ttk.Frame(self, padding=(16, 14, 16, 8))
+        header.grid(row=0, column=0, sticky="ew")
+        header.columnconfigure(0, weight=1)
+        ttk.Label(
+            header,
+            text="예약어 목록",
+            font=(app.settings.font_family, 14, "bold"),
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Label(
+            header,
+            text="약속어 이름, 기능 설명, 사용 방법으로 검색할 수 있습니다.",
+            foreground=app.palette["muted"],
+        ).grid(row=1, column=0, sticky="w", pady=(3, 8))
+        search_entry = ttk.Entry(header, textvariable=self.search_var)
+        search_entry.grid(row=2, column=0, sticky="ew")
+        search_entry.focus_set()
+
+        content = ttk.PanedWindow(self, orient=HORIZONTAL)
+        content.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 12))
+
+        list_frame = ttk.Frame(content, padding=(0, 0, 10, 0))
+        list_frame.rowconfigure(0, weight=1)
+        list_frame.columnconfigure(0, weight=1)
+        self.tree = ttk.Treeview(list_frame, columns=("word", "summary"), show="headings", selectmode="browse")
+        self.tree.heading("word", text="예약어")
+        self.tree.heading("summary", text="기능")
+        self.tree.column("word", width=120, minwidth=90, stretch=False)
+        self.tree.column("summary", width=260, minwidth=180)
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.bind("<<TreeviewSelect>>", self._show_selected)
+        content.add(list_frame, weight=1)
+
+        detail = ttk.Frame(content, padding=(10, 0, 0, 0))
+        detail.columnconfigure(0, weight=1)
+        detail.rowconfigure(3, weight=1)
+        self.detail_word = ttk.Label(detail, font=(app.settings.font_family, 16, "bold"))
+        self.detail_word.grid(row=0, column=0, sticky="w")
+        self.detail_summary = ttk.Label(detail, wraplength=360, foreground=app.palette["muted"])
+        self.detail_summary.grid(row=1, column=0, sticky="w", pady=(6, 14))
+        self.detail_usage = ttk.Label(detail, wraplength=360)
+        self.detail_usage.grid(row=2, column=0, sticky="w", pady=(0, 8))
+        self.detail_example = tk.Text(detail, height=8, wrap="none", state="disabled", borderwidth=0, highlightthickness=0)
+        self.detail_example.grid(row=3, column=0, sticky="nsew")
+        content.add(detail, weight=2)
+
+        self._visible_items = []
+        self._refresh_results()
+
+    def _refresh_results(self, *_args) -> None:
+        self._visible_items = search_reserved_words(self.search_var.get())
+        for item_id in self.tree.get_children():
+            self.tree.delete(item_id)
+        for item in self._visible_items:
+            self.tree.insert("", END, values=(item["word"], item["summary"]))
+
+        if self._visible_items:
+            first = self.tree.get_children()[0]
+            self.tree.selection_set(first)
+            self.tree.focus(first)
+        else:
+            self._clear_detail()
+
+    def _show_selected(self, _event=None) -> None:
+        selection = self.tree.selection()
+        if not selection:
+            return
+        item = self._visible_items[self.tree.index(selection[0])]
+        self.detail_word.configure(text=item["word"])
+        self.detail_summary.configure(text=item["summary"])
+        self.detail_usage.configure(text=f"사용 방법: {item['usage']}")
+        self.detail_example.configure(state="normal")
+        self.detail_example.delete("1.0", END)
+        self.detail_example.insert("1.0", item["example"])
+        self.detail_example.configure(state="disabled", bg=self.app.palette["editor"], fg=self.app.palette["fg"])
+
+    def _clear_detail(self) -> None:
+        self.detail_word.configure(text="검색 결과 없음")
+        self.detail_summary.configure(text="약속어 이름이나 기능과 관련된 단어를 검색해 보세요.")
+        self.detail_usage.configure(text="")
+        self.detail_example.configure(state="normal")
+        self.detail_example.delete("1.0", END)
+        self.detail_example.configure(state="disabled")
+
+
 class HangulloIDE:
     def __init__(self):
         self.root = tk.Tk()
@@ -1290,6 +1434,7 @@ class HangulloIDE:
 
         help_menu = tk.Menu(menubar, tearoff=False)
         help_menu.add_command(label="Hangullo 배우기", command=self.open_learning)
+        help_menu.add_command(label="예약어 목록", command=self.open_reserved_words)
         help_menu.add_separator()
         help_menu.add_command(label="보고", command=self.open_report)
         help_menu.add_command(label="Hangullo IDE 정보", command = self.show_about)
@@ -1512,6 +1657,9 @@ class HangulloIDE:
 
     def open_learning(self) -> None:
         open_learning_window(self)
+
+    def open_reserved_words(self) -> None:
+        ReservedWordsDialog(self)
 
     def open_file_dialog(self) -> None:
         path = filedialog.askopenfilename(
