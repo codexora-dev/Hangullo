@@ -1,0 +1,114 @@
+[
+  {
+    "word": "출력",
+    "category": "입출력",
+    "python_words": ["print"],
+    "summary": "값을 화면에 출력합니다.",
+    "usage": "출력(값)",
+    "example": "출력(\"안녕하세요\")\n출력(점수)"
+  },
+  {
+    "word": "변수",
+    "category": "변수",
+    "python_words": ["variable", "assignment"],
+    "summary": "값을 저장할 변수 이름을 선언합니다.",
+    "usage": "변수 이름 = 값",
+    "example": "변수 점수 = 100\n출력(점수)"
+  },
+  {
+    "word": "입력",
+    "category": "입출력",
+    "python_words": ["input"],
+    "summary": "사용자 입력을 변수에 저장합니다.",
+    "usage": "입력(변수, \"안내 문구\")",
+    "example": "입력(이름, \"이름: \")\n출력(이름)"
+  },
+  {
+    "word": "만약",
+    "category": "조건문",
+    "python_words": ["if"],
+    "summary": "조건이 참일 때 블록을 실행합니다.",
+    "usage": "만약 조건:",
+    "example": "만약 점수 >= 60:\n    출력(\"합격\")"
+  },
+  {
+    "word": "아니고만약",
+    "category": "조건문",
+    "python_words": ["elif"],
+    "summary": "앞선 조건이 거짓일 때 다른 조건을 검사합니다.",
+    "usage": "아니고만약 조건:",
+    "example": "아니고만약 점수 >= 40:\n    출력(\"재시험\")"
+  },
+  {
+    "word": "아니면",
+    "category": "조건문",
+    "python_words": ["else"],
+    "summary": "앞선 조건이 모두 거짓일 때 블록을 실행합니다.",
+    "usage": "아니면:",
+    "example": "아니면:\n    출력(\"불합격\")"
+  },
+  {
+    "word": "반복",
+    "category": "반복문",
+    "python_words": ["for", "while"],
+    "summary": "지정한 횟수만큼 블록을 반복합니다.",
+    "usage": "반복 횟수:",
+    "example": "반복 3:\n    출력(\"안녕\")"
+  },
+  {
+    "word": "함수",
+    "category": "함수",
+    "python_words": ["def", "function"],
+    "summary": "여러 번 사용할 코드를 함수로 정의합니다.",
+    "usage": "함수 이름(매개변수):",
+    "example": "함수 인사(이름):\n    출력(\"안녕, \" + 이름)"
+  },
+  {
+    "word": "반환",
+    "category": "함수",
+    "python_words": ["return"],
+    "summary": "함수 실행 결과를 반환합니다.",
+    "usage": "반환 값",
+    "example": "함수 더하기(가, 나):\n    반환 가 + 나"
+  },
+  {
+    "word": "참",
+    "category": "논리/값",
+    "python_words": ["True"],
+    "summary": "참을 나타내는 불리언 값입니다.",
+    "usage": "참",
+    "example": "변수 실행 = 참"
+  },
+  {
+    "word": "거짓",
+    "category": "논리/값",
+    "python_words": ["False"],
+    "summary": "거짓을 나타내는 불리언 값입니다.",
+    "usage": "거짓",
+    "example": "변수 완료 = 거짓"
+  },
+  {
+    "word": "그리고",
+    "category": "논리/값",
+    "python_words": ["and"],
+    "summary": "두 조건이 모두 참인지 확인합니다.",
+    "usage": "조건1 그리고 조건2",
+    "example": "만약 나이 >= 13 그리고 동의 == 참:"
+  },
+  {
+    "word": "또는",
+    "category": "논리/값",
+    "python_words": ["or"],
+    "summary": "두 조건 중 하나라도 참인지 확인합니다.",
+    "usage": "조건1 또는 조건2",
+    "example": "만약 등급 == \"A\" 또는 등급 == \"B\":"
+  },
+  {
+    "word": "아니다",
+    "category": "논리/값",
+    "python_words": ["not"],
+    "summary": "조건의 참과 거짓을 반대로 바꿉니다.",
+    "usage": "아니다 조건",
+    "example": "만약 아니다 완료:\n    출력(\"진행 중\")"
+  }
+]
