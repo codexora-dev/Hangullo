@@ -1,0 +1,36 @@
+name: Build macOS App
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: arm64
+          - runner: macos-15-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build dependency
+        run: python -m pip install -r requirements-ide.txt
+      - name: Build macOS app and disk image
+        run: python scripts/build_installer.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hangullo-macOS-${{ matrix.architecture }}
+          path: dist/Hangullo-*-macOS-${{ matrix.architecture }}.dmg
+          if-no-files-found: error

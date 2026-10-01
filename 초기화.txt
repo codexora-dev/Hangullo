@@ -1,7 +1,15 @@
-Remove-Item -Recurse -Force .\build -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force .\dist -ErrorAction SilentlyContinue
-Remove-Item -Force .\HangulloIDE.spec -ErrorAction SilentlyContinue
+Hangullo 배포 빌드 안내
 
-install
+Windows x64:
+	build_installer.bat
 
-pyinstaller --noconfirm --clean --onefile --windowed --name "HangulloIDE" --icon ".\assets\icon\Hangullo_Logo1.ico" --paths "." --collect-submodules compiler --collect-submodules lexer --collect-submodules parser .\IDE\app.py
+macOS:
+	python scripts/build_installer.py
+
+현재 OS의 실행 파일을 PyInstaller로 패키징합니다.
+Windows에서는 Inno Setup 6 설치 파일을 추가로 생성합니다.
+macOS에서는 Hangullo.app과 DMG를 생성합니다.
+
+빌드 결과는 dist 폴더에 생성됩니다. 빌드 스크립트는 자체 생성한
+build/pyinstaller 관련 폴더만 정리하며 dist 폴더 전체를 삭제하지 않습니다.
+자세한 사전 조건과 테스트 항목은 docs/Windows_Installer.md를 참고하세요.

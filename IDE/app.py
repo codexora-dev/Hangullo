@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import threading
 import queue
 import re
@@ -15,7 +16,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 if getattr(sys, "frozen", False):
-    PROJECT_ROOT = Path(sys.executable).resolve().parent
+    PROJECT_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -45,13 +46,26 @@ from compiler.codegen.python import PythonCodeGenerator
 from IDE.block_editor import BlockEditor
 from lexer.lexer import Lexer
 from parser.parser import Parser
-from errors import HangulloError
+from errors import HangulloError, HangulloRuntimeError, translate_python_error
 from learn.learning_app import open_learning_window
+from version import __version__
 
 
-APP_DIR = Path(__file__).resolve().parent
-DEFAULT_HANGULLO_ROOT = APP_DIR.parent
-SETTINGS_FILE = APP_DIR / "settings.json"
+IS_FROZEN = getattr(sys, "frozen", False)
+APP_DIR = PROJECT_ROOT / "IDE" if IS_FROZEN else Path(__file__).resolve().parent
+if os.name == "nt":
+    USER_DATA_BASE = Path(
+        os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming"
+    )
+elif sys.platform == "darwin":
+    USER_DATA_BASE = Path.home() / "Library" / "Application Support"
+else:
+    USER_DATA_BASE = Path(
+        os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config"
+    )
+USER_DATA_DIR = USER_DATA_BASE / "Hangullo"
+DEFAULT_HANGULLO_ROOT = Path.home() / "Documents" / "Hangullo"
+SETTINGS_FILE = USER_DATA_DIR / "settings.json" if IS_FROZEN else APP_DIR / "settings.json"
 RESERVED_WORDS_FILE = APP_DIR / "reserved_words.json"
  
 THEMES = {
@@ -234,6 +248,7 @@ class Settings:
         return settings
 
     def save(self) -> None:
+        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
         SETTINGS_FILE.write_text(json.dumps(self.__dict__, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
@@ -1379,17 +1394,16 @@ class ReservedWordsDialog(tk.Toplevel):
 class HangulloIDE:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Hangullo IDE")
+        self.root.title(f"Hangullo IDE v{__version__}")
         self.root.geometry("1220x780")
         self.root.minsize(900, 580)
 
-        icon_path = Path(__file__).parent.parent / "assets" / "icon" / "Hangullo_Logo2.ico"
-
-        print("아이콘 경로:", icon_path)
-        print("아이콘 존재:", icon_path.exists())
-
+        icon_path = PROJECT_ROOT / "assets" / "icon" / "Hangullo_Logo2.ico"
         if icon_path.exists():
-            self.root.iconbitmap(str(icon_path))
+            try:
+                self.root.iconbitmap(str(icon_path))
+            except tk.TclError:
+                pass
 
         self.settings = Settings.load()
         self.settings.font_family = choose_font([self.settings.font_family, "맑은 고딕", "Malgun Gothic", "D2Coding", "Cascadia Mono", "Arial"])
@@ -1413,6 +1427,14 @@ class HangulloIDE:
         self._build_menu()
         self._build_layout()
         self.apply_settings()
+        try:
+            self.prepare_workspace(self.workspace)
+        except OSError as error:
+            messagebox.showwarning(
+                "작업 폴더 준비 실패",
+                f"예제 파일을 준비하지 못했습니다.\n{error}",
+                parent=self.root,
+            )
         self.load_workspace(self.workspace)
         self.open_start_file()
         self._bind_shortcuts()
@@ -1674,6 +1696,20 @@ class HangulloIDE:
     def open_start_file(self) -> None:
         self.new_file()
 
+    @staticmethod
+    def prepare_workspace(path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+        source_examples = PROJECT_ROOT / "examples"
+        if not source_examples.is_dir():
+            return
+
+        destination = path / "examples"
+        destination.mkdir(parents=True, exist_ok=True)
+        for source in source_examples.glob("*.hg"):
+            target = destination / source.name
+            if not target.exists():
+                shutil.copy2(source, target)
+
     def focus_editor(self) -> None:
         tab = self.current_tab()
         if tab is not None:
@@ -1863,9 +1899,14 @@ class HangulloIDE:
                     QueueStream(self.output_queue, "stderr")
                 ):
                     exec(python_code, namespace)
-            except BaseException:
-                import traceback
-                traceback.print_exc(file=QueueStream(self.output_queue, "stderr"))
+            except BaseException as error:
+                title, solution = translate_python_error(
+                    type(error).__name__, str(error)
+                )
+                runtime_error = HangulloRuntimeError(
+                    f"{title} {error}\n해결 방법: {solution}"
+                )
+                self.output_queue.put(("stderr", runtime_error.format() + "\n"))
             finally:
                 self._run_finished.set()
 
@@ -2184,10 +2225,10 @@ class HangulloIDE:
 
     def show_welcome_message(self) -> None:
         messagebox.showinfo(
-            "Hangullo IDE v0.0.1-beta",
+            f"Hangullo IDE v{__version__}",
             (
                 "Hangullo IDE에 오신 것을 환영합니다!\n\n"
-                "현재 Hangullo IDE는 v0.0.1-beta 버전입니다.\n"
+                f"현재 Hangullo IDE는 v{__version__} 버전입니다.\n"
                 "아직 개발 중인 버전이므로 오류가 발생하거나 "
                 "문법 및 기능이 변경될 수 있습니다.\n\n"
                 "사용하면서 발견한 오류나 개선 의견이 있다면 "
@@ -2204,7 +2245,7 @@ class HangulloIDE:
         messagebox.showinfo(
             "Hangullo IDE 정보",
             (
-                "Hangullo IDE v0.0.1-beta\n\n"
+                f"Hangullo IDE v{__version__}\n\n"
                 "한국어 기반 프로그래밍 언어 Hangullo의 개발 환경입니다.\n\n"
                 "Hangullo Programming Language\n"
                 "Copyright (c) 2026 Hangullo Project"
@@ -2522,6 +2563,11 @@ class HangulloIDE:
 
 def main() -> None:
     app = HangulloIDE()
+    for argument in sys.argv[1:]:
+        path = Path(argument)
+        if path.suffix.casefold() == ".hg":
+            app.open_file(path)
+            break
     app.run()
     
 if __name__ == "__main__":
