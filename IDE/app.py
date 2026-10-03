@@ -1536,7 +1536,7 @@ class HangulloIDE:
         right_tools.pack(side=RIGHT)
         ttk.Button(right_tools, text="설정", command=self.open_settings).pack(side=RIGHT)
         ttk.Button(right_tools, text="Python", command=self.show_python_code).pack(side=RIGHT, padx=(0, 5))
-        self.mode_button = ttk.Button(right_tools, text="블록 모드", command=self.toggle_mode, style="Mode.TButton")
+        self.mode_button = ttk.Button(right_tools, text="블록 모드(개발 중)", command=self.toggle_mode, style="Mode.TButton")
         self.mode_button.pack(side=RIGHT, padx=(0, 10))
         self.mode_indicator = ttk.Label(right_tools, text="텍스트 코딩", style="ModeLabel.TLabel")
         self.mode_indicator.pack(side=RIGHT, padx=(0, 7))
@@ -1645,36 +1645,46 @@ class HangulloIDE:
             tab.apply_settings()
         self.update_status()
 
+    # def toggle_mode(self) -> None:
+    #     tab = self.current_tab()
+    #     if tab is None:
+    #         return
+
+    #     if self.mode == "텍스트 코딩":
+    #         try:
+    #             tab.block_editor.load_source(tab.content(), strict=True)
+    #         except HangulloError as error:
+    #             self.write_console(error.format() + "\n", "error")
+    #             return
+    #         self.mode = "블록 코딩"
+    #         tab.text.grid_remove()
+    #         tab.line_numbers.grid_remove()
+    #         tab.block_editor.grid()
+    #         self.mode_button.configure(text="텍스트 모드")
+    #         self.mode_indicator.configure(text="블록 코딩")
+    #         self.status.configure(text="블록 코딩 모드: 블록을 작업 영역으로 끌어오세요.")
+    #         return
+
+    #     tab.set_content_from_block(tab.block_editor.source())
+    #     tab.block_editor.grid_remove()
+    #     tab.text.grid()
+    #     if self.settings.show_line_numbers:
+    #         tab.line_numbers.grid()
+    #     self.mode = "텍스트 코딩"
+    #     self.mode_button.configure(text="블록 모드")
+    #     self.mode_indicator.configure(text="텍스트 코딩")
+    #     tab.highlight()
+    #     self.update_status()
+    # 현재는 블록 모드가 개발 중이므로 위의 코드를 사용 하지 않음. 블록 코드 개발이 종료 될 시 위의 코드 사용
+
     def toggle_mode(self) -> None:
-        tab = self.current_tab()
-        if tab is None:
-            return
-
-        if self.mode == "텍스트 코딩":
-            try:
-                tab.block_editor.load_source(tab.content(), strict=True)
-            except HangulloError as error:
-                self.write_console(error.format() + "\n", "error")
-                return
-            self.mode = "블록 코딩"
-            tab.text.grid_remove()
-            tab.line_numbers.grid_remove()
-            tab.block_editor.grid()
-            self.mode_button.configure(text="텍스트 모드")
-            self.mode_indicator.configure(text="블록 코딩")
-            self.status.configure(text="블록 코딩 모드: 블록을 작업 영역으로 끌어오세요.")
-            return
-
-        tab.set_content_from_block(tab.block_editor.source())
-        tab.block_editor.grid_remove()
-        tab.text.grid()
-        if self.settings.show_line_numbers:
-            tab.line_numbers.grid()
-        self.mode = "텍스트 코딩"
-        self.mode_button.configure(text="블록 모드")
-        self.mode_indicator.configure(text="텍스트 코딩")
-        tab.highlight()
-        self.update_status()
+        messagebox.showinfo(
+            "블록 코딩 모드 사용 불가 안내",
+            "현재 블록 코딩 모드는 개발 중이므로 사용할 수 없습니다.\n"
+            "블록 코딩 모드를 최대한 빠른 시일 내에 개발 완료하여 제공하도록 하겠습니다.\n"
+            "서비스 이용에 불편을 드려 죄송합니다.",
+            parent=self.root
+        )
 
     def _tab_changed(self, _event=None) -> None:
         tab = self.current_tab()
