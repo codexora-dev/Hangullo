@@ -44,9 +44,14 @@ from tkinter import (
 )
 from compiler.codegen.python import PythonCodeGenerator
 from IDE.block_editor import BlockEditor
+from IDE.window_utils import set_hangullo_icon
 from lexer.lexer import Lexer
 from parser.parser import Parser
 from errors import HangulloError, HangulloRuntimeError, translate_python_error
+from IDE.bug_report import BugReportDialog
+from IDE.feature_request import FeatureRequestDialog
+from IDE.survey import ExperienceSurveyDialog, UsageSurveyDialog, UsageSurveyPrompt
+from IDE.update_checker import check_for_update, show_update_dialog
 from learn.learning_app import open_learning_window
 from version import __version__
 
@@ -67,6 +72,59 @@ USER_DATA_DIR = USER_DATA_BASE / "Hangullo"
 DEFAULT_HANGULLO_ROOT = Path.home() / "Documents" / "Hangullo"
 SETTINGS_FILE = USER_DATA_DIR / "settings.json" if IS_FROZEN else APP_DIR / "settings.json"
 RESERVED_WORDS_FILE = APP_DIR / "reserved_words.json"
+
+
+def is_han_project_directory(path: Path) -> bool:
+    return (
+        path.is_dir()
+        and (path / "main.py").is_file()
+        and all((path / name).is_dir() for name in ("compiler", "lexer", "parser"))
+    )
+
+
+def find_han_project_path(candidates: list[Path] | None = None) -> Path | None:
+    if candidates is None:
+        home = Path.home()
+        candidates = [
+            PROJECT_ROOT,
+            home / "Desktop" / "Hangullo",
+            home / "Documents" / "Hangullo",
+            home / "Downloads" / "Hangullo",
+            home / "OneDrive" / "Desktop" / "Hangullo",
+        ]
+        for variable in ("OneDrive", "OneDriveCommercial"):
+            one_drive = os.environ.get(variable)
+            if one_drive:
+                candidates.append(Path(one_drive) / "Desktop" / "Hangullo")
+
+    for candidate in dict.fromkeys(Path(path).expanduser() for path in candidates):
+        if is_han_project_directory(candidate):
+            return candidate
+    return None
+
+
+def resolve_workspace_path(
+    configured_path: Path,
+    first_run: bool,
+    candidates: list[Path] | None = None,
+) -> Path:
+    configured_path = Path(configured_path).expanduser()
+    if not first_run and configured_path.is_dir():
+        return configured_path
+
+    search_candidates = [configured_path]
+    if candidates is None:
+        discovered_candidates = None
+    else:
+        discovered_candidates = candidates
+    discovered = find_han_project_path(discovered_candidates or search_candidates)
+    if discovered is None and candidates is None:
+        discovered = find_han_project_path()
+    if discovered is not None:
+        return discovered
+    if configured_path.is_dir():
+        return configured_path
+    return DEFAULT_HANGULLO_ROOT
  
 THEMES = {
     "Hangullo Dark": {
@@ -230,6 +288,7 @@ class Settings:
     han_root: str = str(DEFAULT_HANGULLO_ROOT)
     first_run: bool = True
     show_python_code: bool = False
+    usage_survey_completed: bool = False
 
     @classmethod
     def load(cls) -> "Settings":
@@ -518,6 +577,7 @@ class EditorTab(ttk.Frame):
     def _show_call_hint(self, signature: str, description: str) -> None:
         self._hide_call_hint()
         hint = tk.Toplevel(self.text)
+        set_hangullo_icon(hint)
         hint.overrideredirect(True)
         hint.attributes("-topmost", True)
         p = self.app.palette
@@ -617,6 +677,7 @@ class EditorTab(ttk.Frame):
 class SettingsDialog(tk.Toplevel):
     def __init__(self, app: "HangulloIDE"):
         super().__init__(app.root)
+        set_hangullo_icon(self)
         self.app = app
         self.title("설정")
         self.resizable(False, False)
@@ -673,6 +734,7 @@ class SettingsDialog(tk.Toplevel):
 
     def auto_find_han_root(self) -> None:
         progress = tk.Toplevel(self)
+        set_hangullo_icon(progress)
         progress.title("Hangullo 프로젝트 찾기")
         progress.geometry("560x300")
         progress.resizable(False, False)
@@ -746,26 +808,7 @@ class SettingsDialog(tk.Toplevel):
         result_queue = queue.Queue()
 
         def is_han_project(path: str) -> bool:
-            try:
-                entries = set()
-
-                with os.scandir(path) as scanner:
-                    for entry in scanner:
-                        if entry.name in {
-                            "main.py",
-                            "compiler",
-                            "lexer",
-                            "parser"
-                        }:
-                            entries.add(entry.name)
-
-                            if len(entries) == 4:
-                                return True
-
-            except (PermissionError, OSError):
-                pass
-
-            return False
+            return is_han_project_directory(Path(path))
 
         def get_drives():
             drives = []
@@ -1193,6 +1236,7 @@ class SettingsDialog(tk.Toplevel):
         )
     def select_han_project(self, projects: list[Path]) -> None:
         window = tk.Toplevel(self)
+        set_hangullo_icon(window)
         window.title("Hangullo 프로젝트 선택")
         window.geometry("650x400")
         window.transient(self)
@@ -1264,6 +1308,7 @@ class SettingsDialog(tk.Toplevel):
 class ReservedWordsDialog(tk.Toplevel):
     def __init__(self, app: "HangulloIDE"):
         super().__init__(app.root)
+        set_hangullo_icon(self)
         self.app = app
         self.title("Hangullo 예약어 목록")
         self.geometry("780x560")
@@ -1398,20 +1443,20 @@ class HangulloIDE:
         self.root.geometry("1220x780")
         self.root.minsize(900, 580)
 
-        icon_path = PROJECT_ROOT / "assets" / "icon" / "Hangullo_Logo2.ico"
-        if icon_path.exists():
-            try:
-                self.root.iconbitmap(str(icon_path))
-            except tk.TclError:
-                pass
+        set_hangullo_icon(self.root)
 
         self.settings = Settings.load()
         self.settings.font_family = choose_font([self.settings.font_family, "맑은 고딕", "Malgun Gothic", "D2Coding", "Cascadia Mono", "Arial"])
         self.palette = THEMES[self.settings.theme if self.settings.theme in THEMES else "Hangullo Dark"]
-        self.workspace = Path(self.settings.han_root)
+        self.workspace = resolve_workspace_path(
+            Path(self.settings.han_root or DEFAULT_HANGULLO_ROOT),
+            self.settings.first_run,
+        )
+        self.settings.han_root = str(self.workspace)
 
         self.in_process_run = False
         self._closing = False
+        self.last_error_type = "사용자 직접 보고"
         self._run_finished = threading.Event()
         self._run_thread: threading.Thread | None = None
         self.console_input_active = False
@@ -1422,6 +1467,8 @@ class HangulloIDE:
 
         self.mode = "텍스트 코딩"
         self._initial_split_applied = False
+        self.help_menu: tk.Menu | None = None
+        self.usage_survey_menu_index: int | None = None
 
         self._build_styles()
         self._build_menu()
@@ -1430,11 +1477,20 @@ class HangulloIDE:
         try:
             self.prepare_workspace(self.workspace)
         except OSError as error:
-            messagebox.showwarning(
-                "작업 폴더 준비 실패",
-                f"예제 파일을 준비하지 못했습니다.\n{error}",
-                parent=self.root,
-            )
+            fallback_workspace = DEFAULT_HANGULLO_ROOT
+            try:
+                self.prepare_workspace(fallback_workspace)
+            except OSError as fallback_error:
+                messagebox.showwarning(
+                    "작업 폴더 준비 실패",
+                    "예제 파일을 준비하지 못했습니다.\n"
+                    f"선택한 경로: {self.workspace}\n{error}\n\n"
+                    f"기본 경로: {fallback_workspace}\n{fallback_error}",
+                    parent=self.root,
+                )
+            else:
+                self.workspace = fallback_workspace
+                self.settings.han_root = str(fallback_workspace)
         self.load_workspace(self.workspace)
         self.open_start_file()
         self._bind_shortcuts()
@@ -1445,6 +1501,8 @@ class HangulloIDE:
             self.settings.first_run = False
 
         self.root.after(100, self.focus_editor)
+        self.root.after(600, self._show_usage_survey_prompt)
+        self.root.after(1600, self._check_for_updates)
         
 
 
@@ -1497,10 +1555,18 @@ class HangulloIDE:
         menubar.add_cascade(label="보기", menu=view_menu)
 
         help_menu = tk.Menu(menubar, tearoff=False)
+        self.help_menu = help_menu
         help_menu.add_command(label="Hangullo 배우기", command=self.open_learning)
         help_menu.add_command(label="예약어 목록", command=self.open_reserved_words)
         help_menu.add_separator()
-        help_menu.add_command(label="보고", command=self.open_report)
+        if not self.settings.usage_survey_completed:
+            help_menu.add_command(label="사용 수요 조사", command=self.open_usage_survey)
+            self.usage_survey_menu_index = help_menu.index("end")
+        help_menu.add_command(label="사용 경험 조사", command=self.open_experience_survey)
+        help_menu.add_command(label="오류 보고", command=self.open_report)
+        help_menu.add_command(label="기능 요청", command=self.open_feature_request)
+        help_menu.add_separator()
+        help_menu.add_command(label="Hangullo 문서", command=self.open_documentation)
         help_menu.add_command(label="Hangullo IDE 정보", command = self.show_about)
         menubar.add_cascade(label="도움말", menu=help_menu)
 
@@ -1830,6 +1896,7 @@ class HangulloIDE:
         try:
             python_code = self.compile_source_to_python(source)
         except HangulloError as error:
+            self.last_error_type = error.error_type
             self.write_console(
                 f"Hangullo 내부 오류: {error}\n",
                 "error"
@@ -1867,9 +1934,11 @@ class HangulloIDE:
         try:
             python_code = self.compile_source_to_python(source)
         except HangulloError as error:
+            self.last_error_type = error.error_type
             self.write_console(error.format() + "\n", "error")
             return
         except Exception as error:
+            self.last_error_type = "IDE 내부 오류"
             self.write_console(f"Hangullo 내부 오류: {error}\n", "error")
             return
 
@@ -1916,6 +1985,7 @@ class HangulloIDE:
                 runtime_error = HangulloRuntimeError(
                     f"{title} {error}\n해결 방법: {solution}"
                 )
+                self.last_error_type = runtime_error.error_type
                 self.output_queue.put(("stderr", runtime_error.format() + "\n"))
             finally:
                 self._run_finished.set()
@@ -1981,6 +2051,22 @@ class HangulloIDE:
 
     def open_settings(self) -> None:
         SettingsDialog(self)
+
+    def open_usage_survey(self) -> None:
+        if not self.settings.usage_survey_completed:
+            UsageSurveyDialog(self)
+
+    def remove_usage_survey_menu_item(self) -> None:
+        if self.help_menu is None or self.usage_survey_menu_index is None:
+            return
+        self.help_menu.delete(self.usage_survey_menu_index)
+        self.usage_survey_menu_index = None
+
+    def open_experience_survey(self) -> None:
+        ExperienceSurveyDialog(self)
+
+    def open_feature_request(self) -> None:
+        FeatureRequestDialog(self)
 
     def clear_console(self) -> None:
         self.console.configure(state="normal")
@@ -2233,6 +2319,50 @@ class HangulloIDE:
     def run(self) -> None:
         self.root.mainloop()
 
+    def _show_usage_survey_prompt(self) -> None:
+        if not self._closing and not self.settings.usage_survey_completed:
+            UsageSurveyPrompt(self)
+
+    def _check_for_updates(self) -> None:
+        def show_result(succeeded: bool, result) -> None:
+            if self._closing:
+                return
+            if not succeeded:
+                messagebox.showwarning(
+                    "업데이트 확인 실패",
+                    f"업데이트 정보를 확인하지 못했습니다.\n\n{result}",
+                    parent=self.root,
+                )
+            elif result is not None:
+                self._show_available_update(result)
+
+        self._run_background_task(check_for_update, show_result)
+
+    def _show_available_update(self, update) -> None:
+        show_update_dialog(self, update)
+
+    def _run_background_task(self, task, callback) -> None:
+        result_queue: queue.Queue[tuple[bool, object | None]] = queue.Queue(maxsize=1)
+
+        def worker() -> None:
+            try:
+                result_queue.put((True, task()))
+            except Exception as error:
+                result_queue.put((False, str(error) or "알 수 없는 오류가 발생했습니다."))
+
+        def poll() -> None:
+            if self._closing:
+                return
+            try:
+                succeeded, result = result_queue.get_nowait()
+            except queue.Empty:
+                self.root.after(100, poll)
+                return
+            callback(succeeded, result)
+
+        threading.Thread(target=worker, daemon=True).start()
+        self.root.after(100, poll)
+
     def show_welcome_message(self) -> None:
         messagebox.showinfo(
             f"Hangullo IDE v{__version__}",
@@ -2242,14 +2372,17 @@ class HangulloIDE:
                 "아직 개발 중인 버전이므로 오류가 발생하거나 "
                 "문법 및 기능이 변경될 수 있습니다.\n\n"
                 "사용하면서 발견한 오류나 개선 의견이 있다면 "
-                "보기 메뉴에서 보고를 클릭하여 폼을 작성해 주세요.\n"
+                "도움말 메뉴에서 설문이나 오류 보고를 이용해 주세요.\n"
                 "폼을 작성해 주시면 Hangullo의 발전에 큰 도움이 됩니다.\n\n"
                 "Hangullo Programming Language"
             )
         )
 
     def open_report(self) -> None:
-        webbrowser.open("https://naver.me/IgMmQYQa")
+        BugReportDialog(self)
+
+    def open_documentation(self) -> None:
+        webbrowser.open("https://github.com/codexora-dev/Hangullo/tree/main/docs")
 
     def show_about(self) -> None:
         messagebox.showinfo(
@@ -2492,6 +2625,7 @@ class HangulloIDE:
         self.last_python_code = python_code
 
         window = tk.Toplevel(self.root)
+        set_hangullo_icon(window)
         window.title("생성된 Python 코드")
         window.geometry("850x650")
         window.transient(self.root)

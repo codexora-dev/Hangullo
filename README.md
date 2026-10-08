@@ -99,6 +99,8 @@ python -m unittest discover -s tests -v
 
 Windows x64에서는 Python 3.10 이상과 Inno Setup 6을 준비한 뒤 `build_installer.bat`을 실행합니다. macOS에서는 Python 3.10 이상으로 `python scripts/build_installer.py`를 실행해 `.dmg`를 생성합니다. PyInstaller는 필요할 때 자동 설치됩니다. 버전은 `version.py`에서 관리합니다. 자세한 내용은 [배포 문서](docs/Windows_Installer.md)를 참고하세요.
 
+IDE의 사용 조사, 오류 보고, 기능 요청 및 업데이트 확인을 설정하려면 [Supabase 설정 및 배포 문서](docs/Supabase_Setup.md)를 참고하세요.
+
 ## 버전과 제한
 
 `v0.0.1-beta`는 작동 가능한 핵심 언어 흐름에 초점을 둔 beta 버전입니다. 자체 VM, 바이트코드, 패키지 관리자, 복잡한 표준 라이브러리, 고급 객체지향 기능은 아직 지원하지 않습니다.

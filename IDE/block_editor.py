@@ -4,6 +4,7 @@ import json
 import tkinter as tk
 from tkinter import BOTH, END, LEFT, RIGHT, X, font as tkfont, ttk
 
+from IDE.window_utils import set_hangullo_icon
 from parser.nodes import (
     BinaryOpNode,
     FunctionCallNode,
@@ -724,6 +725,7 @@ class BlockEditor(ttk.Frame):
     def _value_input_dialog(self, title, prompt, initial):
         p = self.app.palette
         dialog = tk.Toplevel(self.app.root, bg=p["panel"])
+        set_hangullo_icon(dialog)
         dialog.title(title)
         dialog.transient(self.app.root)
         dialog.resizable(False, False)
@@ -980,6 +982,7 @@ class BlockEditor(ttk.Frame):
     def _show_tooltip_for(self, widget, node):
         self._hide_tooltip()
         tooltip = tk.Toplevel(self.app.root)
+        set_hangullo_icon(tooltip)
         self.tooltip = tooltip
         tooltip.overrideredirect(True)
         tooltip.attributes("-topmost", True)
